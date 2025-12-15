@@ -1,4 +1,4 @@
-// === 1. CONFIGURAÇÃO DO FIREBASE (TROCAR PELOS SEUS DADOS) ===
+// === 1. CONFIGURAÇÃO DO FIREBASE (USE SEUS DADOS AQUI) ===
 const firebaseConfig = {
   apiKey: "AIzaSyA53oL_wxFlobwWZlgEiyRt7Zr9usQByD4",
   authDomain: "minha-gestao-financeira-d6543.firebaseapp.com",
@@ -74,9 +74,41 @@ const saveSpecialBtn = document.getElementById("saveSpecialBtn");
 const specialMessage = document.getElementById("specialMessage");
 const specialList = document.getElementById("specialList");
 
-// === 3. FUNÇÕES DE DATA / MÊS ===
+// Tema
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+const themeToggleIcon = document.getElementById("themeToggleIcon");
+const themeToggleText = document.getElementById("themeToggleText");
+
+// === 3. TEMA (CLARO/ESCURO) ===
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.setAttribute("data-theme", theme);
+
+  if (theme === "light") {
+    themeToggleIcon.textContent = "🌞";
+    themeToggleText.textContent = "Modo claro";
+  } else {
+    themeToggleIcon.textContent = "🌙";
+    themeToggleText.textContent = "Modo escuro";
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("mgf-theme") || "dark";
+  applyTheme(saved);
+}
+
+themeToggleBtn.addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  applyTheme(next);
+  localStorage.setItem("mgf-theme", next);
+});
+
+initTheme();
+
+// === 4. FUNÇÕES DE DATA / MÊS ===
 function getMonthRefFromDateStr(dateStr) {
-  // dateStr = "YYYY-MM-DD"
   if (!dateStr) return null;
   const [year, month] = dateStr.split("-");
   return `${year}-${month}`;
@@ -89,23 +121,38 @@ function getCurrentMonthRef() {
   return `${year}-${month}`;
 }
 
-function getLastThreeMonthsRefs() {
+// meses: 2 anteriores, atual, próximo
+function getMonthOptions() {
   const today = new Date();
-  const months = [];
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+  const options = [];
+  for (let offset = -2; offset <= 1; offset++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
-    months.push(`${year}-${month}`);
+    options.push(`${year}-${month}`);
   }
-  return months; // [atual, -1, -2]
+  return options;
 }
 
 function formatCurrency(value) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// === 4. AUTENTICAÇÃO ===
+function getPaymentGroupLabel(pg) {
+  if (pg === 1) return "Pagamentos dia 5";
+  if (pg === 2) return "Pagamentos dia 10";
+  if (pg === 3) return "Pagamentos dia 20";
+  return "-";
+}
+
+function formatMonthLabel(monthRef) {
+  const [year, month] = monthRef.split("-");
+  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
+  const formatter = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" });
+  return formatter.format(date);
+}
+
+// === 5. AUTENTICAÇÃO ===
 registerBtn.addEventListener("click", async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
@@ -154,14 +201,26 @@ logoutBtn.addEventListener("click", async () => {
   await auth.signOut();
 });
 
+// === 6. ESTADO GLOBAL ===
+let currentUser = null;
+let filtersInitialized = false;
+let tabsInitialized = false;
+
+let lastIncomes = [];
+let lastExpenses = [];
+let lastSavings = [];
+let lastSpecial = [];
+
 // Observador de login
 auth.onAuthStateChanged((user) => {
   if (user) {
+    currentUser = user;
     authSection.style.display = "none";
     appSection.style.display = "block";
     logoutBtn.style.display = "inline-flex";
-    initAppForUser(user);
+    initAppForUser();
   } else {
+    currentUser = null;
     authSection.style.display = "block";
     appSection.style.display = "none";
     logoutBtn.style.display = "none";
@@ -170,34 +229,35 @@ auth.onAuthStateChanged((user) => {
   }
 });
 
-// === 5. INICIALIZAÇÃO DO APP (DEPOIS DO LOGIN) ===
-let currentUser = null;
-
-async function initAppForUser(user) {
-  currentUser = user;
-
-  // Mês atual na label
+// === 7. INICIALIZAÇÃO DO APP APÓS LOGIN ===
+function initAppForUser() {
   const currentMonth = getCurrentMonthRef();
-  currentMonthLabel.textContent = `Mês atual: ${currentMonth}`;
+  currentMonthLabel.textContent = `Mês atual: ${formatMonthLabel(currentMonth)}`;
 
-  // Preenche select de meses (atual + 2 anteriores)
-  const months = getLastThreeMonthsRefs(); // [atual, -1, -2]
+  // Preenche opções de mês (2 anteriores, atual e próximo)
+  const months = getMonthOptions();
   monthFilter.innerHTML = "";
   months.forEach((m) => {
     const option = document.createElement("option");
     option.value = m;
-    option.textContent = m;
+    const isCurrent = m === currentMonth;
+    option.textContent = isCurrent ? `${m} (atual)` : m;
     monthFilter.appendChild(option);
   });
+  // Garante que o mês atual fica selecionado
+  monthFilter.value = currentMonth;
 
-  // Evento de filtros
-  monthFilter.addEventListener("change", () => reloadAllData());
-  paymentGroupFilter.addEventListener("change", () => reloadAllData());
+  if (!filtersInitialized) {
+    monthFilter.addEventListener("change", reloadAllData);
+    paymentGroupFilter.addEventListener("change", reloadAllData);
+    filtersInitialized = true;
+  }
 
-  // Tabs
-  setupTabs();
+  if (!tabsInitialized) {
+    setupTabs();
+    tabsInitialized = true;
+  }
 
-  // Carrega dados iniciais
   reloadAllData();
 }
 
@@ -211,27 +271,26 @@ function getSelectedPaymentGroup() {
   return parseInt(val, 10);
 }
 
-// === 6. CARREGAR DASHBOARD E LISTAS ===
+// === 8. CARREGAR DASHBOARD E LISTAS ===
 async function reloadAllData() {
   if (!currentUser) return;
 
   const monthRef = getSelectedMonthRef();
   const paymentGroup = getSelectedPaymentGroup();
 
-  await Promise.all([
-    loadIncomes(monthRef, paymentGroup),
-    loadExpenses(monthRef, paymentGroup),
-    loadSavings(monthRef),
-    loadSpecial(monthRef),
-  ]);
+  try {
+    await Promise.all([
+      loadIncomes(monthRef, paymentGroup),
+      loadExpenses(monthRef, paymentGroup),
+      loadSavings(monthRef),
+      loadSpecial(monthRef),
+    ]);
 
-  updateDashboardTotals();
+    updateDashboardTotals();
+  } catch (error) {
+    console.error("Erro ao recarregar dados:", error);
+  }
 }
-
-let lastIncomes = [];
-let lastExpenses = [];
-let lastSavings = [];
-let lastSpecial = [];
 
 async function loadIncomes(monthRef, paymentGroup) {
   let query = db
@@ -261,7 +320,7 @@ async function loadIncomes(monthRef, paymentGroup) {
     const meta = document.createElement("span");
     meta.className = "list-meta";
     const receivedStr = inc.received ? "Recebido" : "A receber";
-    meta.textContent = `${inc.date} • Grupo ${inc.paymentGroup} • ${receivedStr}`;
+    meta.textContent = `${inc.date} • ${getPaymentGroupLabel(inc.paymentGroup)} • ${receivedStr}`;
 
     left.appendChild(title);
     left.appendChild(meta);
@@ -306,7 +365,7 @@ async function loadExpenses(monthRef, paymentGroup) {
     const meta = document.createElement("span");
     meta.className = "list-meta";
     const typeStr = exp.type || "-";
-    let extra = `Tipo: ${typeStr} • Grupo ${exp.paymentGroup}`;
+    let extra = `Tipo: ${typeStr} • ${getPaymentGroupLabel(exp.paymentGroup)}`;
     if (exp.isInstallment) {
       extra += ` • Parcela ${exp.installmentNumber}/${exp.installmentTotal}`;
     }
@@ -420,7 +479,7 @@ function updateDashboardTotals() {
   cardBalance.textContent = formatCurrency(balance);
 }
 
-// === 7. SALVAR RECEITAS / DESPESAS / POUPANÇA / ESPECIAIS ===
+// === 9. SALVAR RECEITAS / DESPESAS / POUPANÇA / ESPECIAIS ===
 saveIncomeBtn.addEventListener("click", async () => {
   if (!currentUser) return;
   incomeMessage.textContent = "";
@@ -458,7 +517,7 @@ saveIncomeBtn.addEventListener("click", async () => {
     incomeDate.value = "";
     incomeReceived.checked = false;
 
-    reloadAllData();
+    await reloadAllData();
   } catch (error) {
     incomeMessage.textContent = "Erro ao salvar receita: " + error.message;
     incomeMessage.classList.add("error");
@@ -511,7 +570,7 @@ saveExpenseBtn.addEventListener("click", async () => {
     expenseInstallmentCurrent.value = "";
     expenseInstallmentTotal.value = "";
 
-    reloadAllData();
+    await reloadAllData();
   } catch (error) {
     expenseMessage.textContent = "Erro ao salvar despesa: " + error.message;
     expenseMessage.classList.add("error");
@@ -553,7 +612,7 @@ saveSavingBtn.addEventListener("click", async () => {
     savingGoal.value = "";
     savingNote.value = "";
 
-    reloadAllData();
+    await reloadAllData();
   } catch (error) {
     savingMessage.textContent = "Erro ao salvar: " + error.message;
     savingMessage.classList.add("error");
@@ -598,14 +657,14 @@ saveSpecialBtn.addEventListener("click", async () => {
     specialAmount.value = "";
     specialDate.value = "";
 
-    reloadAllData();
+    await reloadAllData();
   } catch (error) {
     specialMessage.textContent = "Erro ao salvar: " + error.message;
     specialMessage.classList.add("error");
   }
 });
 
-// === 8. TABS ===
+// === 10. TABS ===
 function setupTabs() {
   const tabs = document.querySelectorAll(".tab");
   const contents = document.querySelectorAll(".tab-content");

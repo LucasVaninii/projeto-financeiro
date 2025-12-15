@@ -22,6 +22,10 @@
                 <span id="currentMonthLabel" class="month-label"></span>
             </div>
             <div class="topbar-right">
+                <button id="themeToggleBtn" class="btn btn-ghost small" type="button">
+                    <span id="themeToggleIcon">🌙</span>
+                    <span id="themeToggleText">Modo escuro</span>
+                </button>
                 <button id="logoutBtn" class="btn btn-ghost" style="display:none;">Sair</button>
             </div>
         </header>
@@ -51,19 +55,22 @@
             <section id="app-section" style="display:none;">
                 <!-- DASHBOARD RESUMO -->
                 <section class="card">
-                    <h2>Resumo financeiro</h2>
+                    <div class="card-header">
+                        <h2>Resumo financeiro</h2>
+                        <span class="badge">Visão rápida</span>
+                    </div>
                     <div class="filters">
                         <label>
-                            Mês:
+                            Mês (atual, 2 anteriores e o próximo):
                             <select id="monthFilter"></select>
                         </label>
                         <label>
                             Grupo de pagamento:
                             <select id="paymentGroupFilter">
                                 <option value="all">Todos</option>
-                                <option value="1">Grupo 1</option>
-                                <option value="2">Grupo 2</option>
-                                <option value="3">Grupo 3</option>
+                                <option value="1">Pagamentos dia 5</option>
+                                <option value="2">Pagamentos dia 10</option>
+                                <option value="3">Pagamentos dia 20</option>
                             </select>
                         </label>
                     </div>
@@ -99,7 +106,10 @@
                 <section id="tab-incomes" class="tab-content active">
                     <div class="layout-two">
                         <div class="card">
-                            <h3>Nova receita</h3>
+                            <div class="card-header">
+                                <h3>Nova receita</h3>
+                                <span class="badge soft">Entrada</span>
+                            </div>
                             <label class="field">
                                 <span>Descrição</span>
                                 <input id="incomeDescription" placeholder="Salário, freelancer, etc." />
@@ -115,9 +125,9 @@
                             <label class="field">
                                 <span>Grupo de pagamento</span>
                                 <select id="incomePaymentGroup">
-                                    <option value="1">Grupo 1</option>
-                                    <option value="2">Grupo 2</option>
-                                    <option value="3">Grupo 3</option>
+                                    <option value="1">Pagamentos dia 5</option>
+                                    <option value="2">Pagamentos dia 10</option>
+                                    <option value="3">Pagamentos dia 20</option>
                                 </select>
                             </label>
                             <label class="field checkbox">
@@ -128,7 +138,9 @@
                             <p id="incomeMessage" class="message"></p>
                         </div>
                         <div class="card">
-                            <h3>Receitas do mês selecionado</h3>
+                            <div class="card-header">
+                                <h3>Receitas do mês selecionado</h3>
+                            </div>
                             <ul id="incomeList" class="list"></ul>
                         </div>
                     </div>
@@ -137,7 +149,10 @@
                 <section id="tab-expenses" class="tab-content">
                     <div class="layout-two">
                         <div class="card">
-                            <h3>Nova despesa</h3>
+                            <div class="card-header">
+                                <h3>Nova despesa</h3>
+                                <span class="badge soft danger">Saída</span>
+                            </div>
                             <label class="field">
                                 <span>Descrição</span>
                                 <input id="expenseDescription" placeholder="Aluguel, internet, etc." />
@@ -161,9 +176,9 @@
                             <label class="field">
                                 <span>Grupo de pagamento</span>
                                 <select id="expensePaymentGroup">
-                                    <option value="1">Grupo 1</option>
-                                    <option value="2">Grupo 2</option>
-                                    <option value="3">Grupo 3</option>
+                                    <option value="1">Pagamentos dia 5</option>
+                                    <option value="2">Pagamentos dia 10</option>
+                                    <option value="3">Pagamentos dia 20</option>
                                 </select>
                             </label>
                             <div class="field-inline">
@@ -180,8 +195,11 @@
                             <p id="expenseMessage" class="message"></p>
                         </div>
                         <div class="card">
-                            <h3>Despesas do mês selecionado (fluxo)</h3>
-                            <p class="muted">Contas especiais ficam em uma aba separada.</p>
+                            <div class="card-header">
+                                <h3>Despesas do mês selecionado (fluxo)</h3>
+                                <span class="badge outline">Sem especiais</span>
+                            </div>
+                            <p class="muted small">Contas especiais ficam em uma aba separada.</p>
                             <ul id="expenseList" class="list"></ul>
                         </div>
                     </div>
@@ -190,7 +208,10 @@
                 <section id="tab-savings" class="tab-content">
                     <div class="layout-two">
                         <div class="card">
-                            <h3>Novo valor guardado</h3>
+                            <div class="card-header">
+                                <h3>Novo valor guardado</h3>
+                                <span class="badge soft">Poupança</span>
+                            </div>
                             <label class="field">
                                 <span>Valor (R$)</span>
                                 <input id="savingAmount" type="number" step="0.01" />
@@ -211,7 +232,9 @@
                             <p id="savingMessage" class="message"></p>
                         </div>
                         <div class="card">
-                            <h3>Valores guardados do mês selecionado</h3>
+                            <div class="card-header">
+                                <h3>Valores guardados do mês selecionado</h3>
+                            </div>
                             <ul id="savingList" class="list"></ul>
                         </div>
                     </div>
@@ -220,8 +243,12 @@
                 <section id="tab-special" class="tab-content">
                     <div class="layout-two">
                         <div class="card">
-                            <h3>Nova conta especial</h3>
-                            <p class="muted">Essas contas não entram no fluxo financeiro, são apenas anotações.</p>
+                            <div class="card-header">
+                                <h3>Nova conta especial</h3>
+                                <span class="badge soft">Anotação</span>
+                            </div>
+                            <p class="muted small">Essas contas não entram no fluxo financeiro, são apenas anotações.
+                            </p>
                             <label class="field">
                                 <span>Descrição</span>
                                 <input id="specialDescription" placeholder="Observação especial" />
@@ -238,7 +265,9 @@
                             <p id="specialMessage" class="message"></p>
                         </div>
                         <div class="card">
-                            <h3>Contas especiais do mês selecionado</h3>
+                            <div class="card-header">
+                                <h3>Contas especiais do mês selecionado</h3>
+                            </div>
                             <ul id="specialList" class="list"></ul>
                         </div>
                     </div>

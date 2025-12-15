@@ -1,3 +1,4 @@
+/* TEMAS (modo claro/escuro) */
 :root {
   --bg: #050816;
   --bg-card: #0f172a;
@@ -12,17 +13,36 @@
   --radius: 12px;
 }
 
+:root[data-theme="light"] {
+  --bg: #f3f4f6;
+  --bg-card: #ffffff;
+  --bg-soft: #f9fafb;
+  --primary: #16a34a;
+  --primary-soft: rgba(22, 163, 74, 0.14);
+  --accent: #0ea5e9;
+  --danger: #ef4444;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --border: #d1d5db;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+/* BASE */
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: radial-gradient(circle at top, #1d283a, #020617);
   color: var(--text);
+}
+
+:root[data-theme="light"] body {
+  background: radial-gradient(circle at top, #e5e7eb, #f3f4f6);
 }
 
 .app-shell {
@@ -41,6 +61,10 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+:root[data-theme="light"] .topbar {
+  background: rgba(249, 250, 251, 0.9);
+}
+
 .logo {
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -55,6 +79,7 @@ body {
 .topbar-right {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .main {
@@ -68,12 +93,24 @@ body {
 /* CARDS & LAYOUT */
 
 .card {
-  background: radial-gradient(circle at top left, #111827, #020617);
+  background: radial-gradient(circle at top left, var(--bg-card), var(--bg-soft));
   border-radius: var(--radius);
   border: 1px solid var(--border);
   padding: 1rem 1.25rem;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.75);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.45);
   margin-bottom: 1rem;
+}
+
+:root[data-theme="light"] .card {
+  box-shadow: 0 14px 30px rgba(148, 163, 184, 0.35);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .auth-card {
@@ -82,12 +119,46 @@ body {
 }
 
 h1, h2, h3 {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.55rem;
 }
 
 .muted {
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+/* BADGES */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-muted);
+}
+
+.badge.soft {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.badge.soft.danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--danger);
+}
+
+.badge.outline {
+  border: 1px dashed var(--border);
+  background: transparent;
 }
 
 /* CAMPOS */
@@ -160,6 +231,12 @@ textarea:focus {
   cursor: pointer;
   transition: 0.18s ease;
   font-weight: 500;
+  background: none;
+}
+
+.btn.small {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
 }
 
 .btn-primary {
@@ -174,7 +251,7 @@ textarea:focus {
 }
 
 .btn-secondary {
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(148, 163, 184, 0.12);
   border-color: rgba(148, 163, 184, 0.5);
   color: var(--text);
 }
@@ -190,7 +267,11 @@ textarea:focus {
 }
 
 .btn-ghost:hover {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+:root[data-theme="light"] .btn-ghost:hover {
+  background: rgba(209, 213, 219, 0.5);
 }
 
 .btn.full {
@@ -218,7 +299,7 @@ textarea:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 0.75rem;
 }
 
@@ -230,7 +311,7 @@ textarea:focus {
 }
 
 .filters select {
-  min-width: 130px;
+  min-width: 180px;
 }
 
 /* CARDS RESUMO */
@@ -242,13 +323,17 @@ textarea:focus {
 }
 
 .mini-card {
-  background: radial-gradient(circle at top, #020617, #0b1120);
+  background: radial-gradient(circle at top, var(--bg-soft), var(--bg-card));
   border-radius: 16px;
-  border: 1px solid rgba(31, 41, 55, 1);
+  border: 1px solid rgba(31, 41, 55, 0.9);
   padding: 0.75rem 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+:root[data-theme="light"] .mini-card {
+  border-color: rgba(209, 213, 219, 1);
 }
 
 .mini-label {
@@ -257,7 +342,7 @@ textarea:focus {
 }
 
 .mini-value {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
@@ -276,14 +361,18 @@ textarea:focus {
 
 .tab {
   flex: 1;
-  min-width: 120px;
+  min-width: 140px;
   padding: 0.5rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.9);
   color: var(--text-muted);
   cursor: pointer;
   font-size: 0.85rem;
+}
+
+:root[data-theme="light"] .tab {
+  background: rgba(243, 244, 246, 0.95);
 }
 
 .tab.active {
@@ -325,11 +414,16 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(15, 23, 42, 0.96);
   border-radius: 999px;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.8rem;
   border: 1px solid rgba(31, 41, 55, 0.9);
   font-size: 0.85rem;
+}
+
+:root[data-theme="light"] .list-item {
+  background: #ffffff;
+  border-color: rgba(209, 213, 219, 1);
 }
 
 .list-left {
@@ -373,6 +467,10 @@ textarea:focus {
   .cards-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .auth-card {
+    margin-top: 3rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -380,10 +478,6 @@ textarea:focus {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.35rem;
-  }
-
-  .auth-card {
-    margin-top: 3rem;
   }
 
   .cards-grid {
