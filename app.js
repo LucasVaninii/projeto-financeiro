@@ -8,6 +8,7 @@ const firebaseConfig = {
   appId: "1:426355365160:web:e7ca8d49d5b2929d562c1d"
 };
 
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -18,6 +19,7 @@ const appSection = document.getElementById("app-section");
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const rememberMeInput = document.getElementById("rememberMe");
 const loginBtn = document.getElementById("loginBtn");
 const registerBtn = document.getElementById("registerBtn");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -112,7 +114,7 @@ themeToggleBtn.addEventListener("click", () => {
 
 initTheme();
 
-// === 4. DATA / MÊS ===
+// === 4. DATA / MÊS / UTILS ===
 function getCurrentMonthRef() {
   const today = new Date();
   const year = today.getFullYear();
@@ -120,7 +122,7 @@ function getCurrentMonthRef() {
   return `${year}-${month}`;
 }
 
-// 2 meses anteriores, atual e 2 próximos
+// 2 meses anteriores, atual, 2 próximos
 function getMonthWindowRefs() {
   const today = new Date();
   const refs = [];
@@ -166,7 +168,18 @@ function addMonthsToDateStr(dateStr, monthsToAdd) {
   return `${ny}-${nm}-${nd}`;
 }
 
-// === 5. AUTENTICAÇÃO ===
+function nextPaymentGroup(current) {
+  if (current === 1) return 2;
+  if (current === 2) return 3;
+  return 1;
+}
+
+// === 5. AUTENTICAÇÃO (lembrar de mim) ===
+(function initRememberMeUI() {
+  const saved = localStorage.getItem("mgf-remember") === "1";
+  rememberMeInput.checked = saved;
+})();
+
 registerBtn.addEventListener("click", async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
@@ -181,6 +194,8 @@ registerBtn.addEventListener("click", async () => {
   }
 
   try {
+    // Registro sempre com persistência LOCAL para conveniência
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.createUserWithEmailAndPassword(email, password);
     authMessage.textContent = "Conta criada com sucesso! Você já está logado.";
     authMessage.classList.add("success");
@@ -193,6 +208,7 @@ registerBtn.addEventListener("click", async () => {
 loginBtn.addEventListener("click", async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  const remember = rememberMeInput.checked;
 
   authMessage.textContent = "";
   authMessage.className = "message";
@@ -204,7 +220,12 @@ loginBtn.addEventListener("click", async () => {
   }
 
   try {
+    const persistence = remember
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+    await auth.setPersistence(persistence);
     await auth.signInWithEmailAndPassword(email, password);
+    localStorage.setItem("mgf-remember", remember ? "1" : "0");
   } catch (err) {
     authMessage.textContent = "Erro ao entrar: " + err.message;
     authMessage.classList.add("error");
@@ -343,6 +364,28 @@ async function loadIncomes(monthRef, paymentGroup) {
     const chips = document.createElement("div");
     chips.className = "chips";
 
+    // Alternar recebido
+    const toggleChip = document.createElement("button");
+    toggleChip.className = "chip success";
+    toggleChip.textContent = inc.received ? "Marcar a receber" : "Marcar recebido";
+    toggleChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await db.collection("incomes").doc(inc.id).update({ received: !inc.received });
+      reloadAllData();
+    });
+
+    // Mudar grupo de pagamento
+    const groupChip = document.createElement("button");
+    groupChip.className = "chip info";
+    groupChip.textContent = "Mudar grupo";
+    groupChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const newGroup = nextPaymentGroup(inc.paymentGroup || 1);
+      await db.collection("incomes").doc(inc.id).update({ paymentGroup: newGroup });
+      reloadAllData();
+    });
+
+    // Excluir
     const delChip = document.createElement("button");
     delChip.className = "chip danger";
     delChip.textContent = "Excluir";
@@ -353,6 +396,8 @@ async function loadIncomes(monthRef, paymentGroup) {
       reloadAllData();
     });
 
+    chips.appendChild(toggleChip);
+    chips.appendChild(groupChip);
     chips.appendChild(delChip);
 
     right.appendChild(valueSpan);
@@ -414,6 +459,7 @@ async function loadExpenses(monthRef, paymentGroup) {
     const chips = document.createElement("div");
     chips.className = "chips";
 
+    // Alternar pago
     const toggleChip = document.createElement("button");
     toggleChip.className = "chip success";
     toggleChip.textContent = exp.paid ? "Marcar em aberto" : "Marcar pago";
@@ -423,17 +469,50 @@ async function loadExpenses(monthRef, paymentGroup) {
       reloadAllData();
     });
 
+    // Mudar grupo de pagamento
+    const groupChip = document.createElement("button");
+    groupChip.className = "chip info";
+    groupChip.textContent = "Mudar grupo";
+    groupChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const newGroup = nextPaymentGroup(exp.paymentGroup || 1);
+      await db.collection("expenses").doc(exp.id).update({ paymentGroup: newGroup });
+      reloadAllData();
+    });
+
+    // Excluir (com regra de série recorrente)
     const delChip = document.createElement("button");
     delChip.className = "chip danger";
     delChip.textContent = "Excluir";
     delChip.addEventListener("click", async (e) => {
       e.stopPropagation();
-      if (!confirm("Excluir esta despesa?")) return;
-      await db.collection("expenses").doc(exp.id).delete();
+      const currentMonthRef = getSelectedMonthRef();
+
+      // Se tem série e está no mês de origem: apaga toda série
+      if (exp.seriesId && exp.originMonthRef === currentMonthRef) {
+        const all = confirm(
+          "Esta despesa é recorrente/parcelada. Deseja apagar TODAS as ocorrências desta série?"
+        );
+        if (!all) return;
+
+        const qSeries = await db
+          .collection("expenses")
+          .where("userId", "==", currentUser.uid)
+          .where("seriesId", "==", exp.seriesId)
+          .get();
+
+        const deletions = qSeries.docs.map((doc) => doc.ref.delete());
+        await Promise.all(deletions);
+      } else {
+        // Apaga só esta
+        if (!confirm("Excluir apenas esta despesa?")) return;
+        await db.collection("expenses").doc(exp.id).delete();
+      }
       reloadAllData();
     });
 
     chips.appendChild(toggleChip);
+    chips.appendChild(groupChip);
     chips.appendChild(delChip);
 
     right.appendChild(valueSpan);
@@ -584,9 +663,17 @@ function updateDashboardTotals() {
   cardBalance.textContent = formatCurrency(balance);
 }
 
-// === 9. SALVAR REGISTROS (COM RECORRÊNCIA / PARCELAS) ===
+// === 9. CRIAÇÃO DE SÉRIES (RECORRÊNCIA / PARCELAS) ===
+function generateSeriesId() {
+  // usa um doc "fake" só para obter um id único
+  return db.collection("_series").doc().id;
+}
+
 async function createIncomeSeries(base) {
   const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
+  const seriesId = months > 1 ? generateSeriesId() : null;
+  const originMonthRef = getMonthRefFromDateStr(base.date);
+
   for (let i = 0; i < months; i++) {
     const dateI = addMonthsToDateStr(base.date, i);
     const monthRefI = getMonthRefFromDateStr(dateI);
@@ -598,14 +685,19 @@ async function createIncomeSeries(base) {
       paymentGroup: base.paymentGroup,
       received: base.received,
       monthRef: monthRefI,
+      seriesId,
+      originMonthRef,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
   }
 }
 
 async function createExpenseSeries(base) {
-  // Se for parcelada, ignora meses recorrentes e cria uma parcela por mês
+  const originMonthRef = getMonthRefFromDateStr(base.dueDate);
+
+  // Parcelada: ignora meses recorrentes, uma parcela por mês
   if (base.isInstallment && base.installmentTotal > 1) {
+    const seriesId = generateSeriesId();
     for (let i = 0; i < base.installmentTotal; i++) {
       const dateI = addMonthsToDateStr(base.dueDate, i);
       const monthRefI = getMonthRefFromDateStr(dateI);
@@ -622,12 +714,16 @@ async function createExpenseSeries(base) {
         isSpecial: base.isSpecial || false,
         paid: base.paid || false,
         monthRef: monthRefI,
+        seriesId,
+        originMonthRef,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
   } else {
-    // Recorrente simples
+    // Recorrente simples (sem parcelas)
     const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
+    const seriesId = months > 1 ? generateSeriesId() : null;
+
     for (let i = 0; i < months; i++) {
       const dateI = addMonthsToDateStr(base.dueDate, i);
       const monthRefI = getMonthRefFromDateStr(dateI);
@@ -644,12 +740,15 @@ async function createExpenseSeries(base) {
         isSpecial: base.isSpecial || false,
         paid: base.paid || false,
         monthRef: monthRefI,
+        seriesId,
+        originMonthRef,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
   }
 }
 
+// === 10. SALVAR REGISTROS ===
 saveIncomeBtn.addEventListener("click", async () => {
   if (!currentUser) return;
   incomeMessage.textContent = "";
@@ -847,7 +946,7 @@ saveSpecialBtn.addEventListener("click", async () => {
   }
 });
 
-// === 10. ABAS ===
+// === 11. ABAS ===
 function setupTabs() {
   const tabs = document.querySelectorAll(".tab");
   const contents = document.querySelectorAll(".tab-content");
