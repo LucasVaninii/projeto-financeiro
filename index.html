@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Minha Gestão Financeira</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Firebase SDKs (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <!-- BARRA SUPERIOR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="logo">💰 Minha Gestão</span>
+                <span id="currentMonthLabel" class="month-label"></span>
+            </div>
+            <div class="topbar-right">
+                <button id="logoutBtn" class="btn btn-ghost" style="display:none;">Sair</button>
+            </div>
+        </header>
+
+        <!-- CONTEÚDO -->
+        <main class="main">
+            <!-- AUTENTICAÇÃO -->
+            <section id="auth-section" class="card auth-card">
+                <h2>Acessar minha conta</h2>
+                <p class="muted">Esse painel é apenas para você. Guarde bem seu e-mail e senha.</p>
+                <label class="field">
+                    <span>E-mail</span>
+                    <input id="email" type="email" placeholder="voce@exemplo.com" />
+                </label>
+                <label class="field">
+                    <span>Senha</span>
+                    <input id="password" type="password" placeholder="••••••••" />
+                </label>
+                <div class="auth-actions">
+                    <button id="loginBtn" class="btn btn-primary">Entrar</button>
+                    <button id="registerBtn" class="btn btn-secondary">Criar conta</button>
+                </div>
+                <p id="authMessage" class="message"></p>
+            </section>
+
+            <!-- APP -->
+            <section id="app-section" style="display:none;">
+                <!-- DASHBOARD RESUMO -->
+                <section class="card">
+                    <h2>Resumo financeiro</h2>
+                    <div class="filters">
+                        <label>
+                            Mês:
+                            <select id="monthFilter"></select>
+                        </label>
+                        <label>
+                            Grupo de pagamento:
+                            <select id="paymentGroupFilter">
+                                <option value="all">Todos</option>
+                                <option value="1">Grupo 1</option>
+                                <option value="2">Grupo 2</option>
+                                <option value="3">Grupo 3</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="cards-grid">
+                        <div class="mini-card">
+                            <span class="mini-label">Receitas no mês</span>
+                            <span id="card-totalIncomes" class="mini-value">R$ 0,00</span>
+                        </div>
+                        <div class="mini-card">
+                            <span class="mini-label">Despesas (fluxo)</span>
+                            <span id="card-totalExpenses" class="mini-value">R$ 0,00</span>
+                        </div>
+                        <div class="mini-card">
+                            <span class="mini-label">Saldo previsto</span>
+                            <span id="card-balance" class="mini-value highlight">R$ 0,00</span>
+                        </div>
+                        <div class="mini-card">
+                            <span class="mini-label">Guardado no mês</span>
+                            <span id="card-savings" class="mini-value">R$ 0,00</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABAS -->
+                <nav class="tabs">
+                    <button class="tab active" data-tab="tab-incomes">Receitas</button>
+                    <button class="tab" data-tab="tab-expenses">Despesas</button>
+                    <button class="tab" data-tab="tab-savings">Valores guardados</button>
+                    <button class="tab" data-tab="tab-special">Contas especiais</button>
+                </nav>
+
+                <!-- CONTEÚDO DAS ABAS -->
+                <section id="tab-incomes" class="tab-content active">
+                    <div class="layout-two">
+                        <div class="card">
+                            <h3>Nova receita</h3>
+                            <label class="field">
+                                <span>Descrição</span>
+                                <input id="incomeDescription" placeholder="Salário, freelancer, etc." />
+                            </label>
+                            <label class="field">
+                                <span>Valor (R$)</span>
+                                <input id="incomeAmount" type="number" step="0.01" />
+                            </label>
+                            <label class="field">
+                                <span>Data</span>
+                                <input id="incomeDate" type="date" />
+                            </label>
+                            <label class="field">
+                                <span>Grupo de pagamento</span>
+                                <select id="incomePaymentGroup">
+                                    <option value="1">Grupo 1</option>
+                                    <option value="2">Grupo 2</option>
+                                    <option value="3">Grupo 3</option>
+                                </select>
+                            </label>
+                            <label class="field checkbox">
+                                <input id="incomeReceived" type="checkbox" />
+                                <span>Já recebido</span>
+                            </label>
+                            <button id="saveIncomeBtn" class="btn btn-primary full">Salvar receita</button>
+                            <p id="incomeMessage" class="message"></p>
+                        </div>
+                        <div class="card">
+                            <h3>Receitas do mês selecionado</h3>
+                            <ul id="incomeList" class="list"></ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-expenses" class="tab-content">
+                    <div class="layout-two">
+                        <div class="card">
+                            <h3>Nova despesa</h3>
+                            <label class="field">
+                                <span>Descrição</span>
+                                <input id="expenseDescription" placeholder="Aluguel, internet, etc." />
+                            </label>
+                            <label class="field">
+                                <span>Valor (R$)</span>
+                                <input id="expenseAmount" type="number" step="0.01" />
+                            </label>
+                            <label class="field">
+                                <span>Data de vencimento</span>
+                                <input id="expenseDueDate" type="date" />
+                            </label>
+                            <label class="field">
+                                <span>Tipo</span>
+                                <select id="expenseType">
+                                    <option value="fixa">Fixa</option>
+                                    <option value="recorrente">Recorrente</option>
+                                    <option value="variavel">Variável</option>
+                                </select>
+                            </label>
+                            <label class="field">
+                                <span>Grupo de pagamento</span>
+                                <select id="expensePaymentGroup">
+                                    <option value="1">Grupo 1</option>
+                                    <option value="2">Grupo 2</option>
+                                    <option value="3">Grupo 3</option>
+                                </select>
+                            </label>
+                            <div class="field-inline">
+                                <label class="field checkbox">
+                                    <input id="expenseInstallment" type="checkbox" />
+                                    <span>Parcelada</span>
+                                </label>
+                                <input id="expenseInstallmentCurrent" type="number" min="1"
+                                    placeholder="Parcela atual" />
+                                <input id="expenseInstallmentTotal" type="number" min="1"
+                                    placeholder="Total de parcelas" />
+                            </div>
+                            <button id="saveExpenseBtn" class="btn btn-primary full">Salvar despesa</button>
+                            <p id="expenseMessage" class="message"></p>
+                        </div>
+                        <div class="card">
+                            <h3>Despesas do mês selecionado (fluxo)</h3>
+                            <p class="muted">Contas especiais ficam em uma aba separada.</p>
+                            <ul id="expenseList" class="list"></ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-savings" class="tab-content">
+                    <div class="layout-two">
+                        <div class="card">
+                            <h3>Novo valor guardado</h3>
+                            <label class="field">
+                                <span>Valor (R$)</span>
+                                <input id="savingAmount" type="number" step="0.01" />
+                            </label>
+                            <label class="field">
+                                <span>Data</span>
+                                <input id="savingDate" type="date" />
+                            </label>
+                            <label class="field">
+                                <span>Destino / objetivo</span>
+                                <input id="savingGoal" placeholder="Reserva, viagem, etc." />
+                            </label>
+                            <label class="field">
+                                <span>Observações</span>
+                                <textarea id="savingNote" rows="3"></textarea>
+                            </label>
+                            <button id="saveSavingBtn" class="btn btn-primary full">Registrar valor guardado</button>
+                            <p id="savingMessage" class="message"></p>
+                        </div>
+                        <div class="card">
+                            <h3>Valores guardados do mês selecionado</h3>
+                            <ul id="savingList" class="list"></ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-special" class="tab-content">
+                    <div class="layout-two">
+                        <div class="card">
+                            <h3>Nova conta especial</h3>
+                            <p class="muted">Essas contas não entram no fluxo financeiro, são apenas anotações.</p>
+                            <label class="field">
+                                <span>Descrição</span>
+                                <input id="specialDescription" placeholder="Observação especial" />
+                            </label>
+                            <label class="field">
+                                <span>Valor (R$)</span>
+                                <input id="specialAmount" type="number" step="0.01" />
+                            </label>
+                            <label class="field">
+                                <span>Data</span>
+                                <input id="specialDate" type="date" />
+                            </label>
+                            <button id="saveSpecialBtn" class="btn btn-primary full">Salvar conta especial</button>
+                            <p id="specialMessage" class="message"></p>
+                        </div>
+                        <div class="card">
+                            <h3>Contas especiais do mês selecionado</h3>
+                            <ul id="specialList" class="list"></ul>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
