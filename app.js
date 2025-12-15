@@ -1,4 +1,4 @@
-// === 1. CONFIGURAÇÃO DO FIREBASE (USE SEUS DADOS AQUI) ===
+// === 1. CONFIGURAÇÃO DO FIREBASE (TROQUE PELOS SEUS DADOS) ===
 const firebaseConfig = {
   apiKey: "AIzaSyA53oL_wxFlobwWZlgEiyRt7Zr9usQByD4",
   authDomain: "minha-gestao-financeira-d6543.firebaseapp.com",
@@ -8,12 +8,11 @@ const firebaseConfig = {
   appId: "1:426355365160:web:e7ca8d49d5b2929d562c1d"
 };
 
-// Inicializa Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// === 2. ELEMENTOS DA PÁGINA ===
+// === 2. ELEMENTOS ===
 const authSection = document.getElementById("auth-section");
 const appSection = document.getElementById("app-section");
 
@@ -25,10 +24,12 @@ const logoutBtn = document.getElementById("logoutBtn");
 const authMessage = document.getElementById("authMessage");
 
 const currentMonthLabel = document.getElementById("currentMonthLabel");
+const yearFilter = document.getElementById("yearFilter");
 const monthFilter = document.getElementById("monthFilter");
 const paymentGroupFilter = document.getElementById("paymentGroupFilter");
+const filterApplyBtn = document.getElementById("filterApplyBtn");
 
-// Cartões do dashboard
+// Cards
 const cardTotalIncomes = document.getElementById("card-totalIncomes");
 const cardTotalExpenses = document.getElementById("card-totalExpenses");
 const cardBalance = document.getElementById("card-balance");
@@ -66,7 +67,7 @@ const saveSavingBtn = document.getElementById("saveSavingBtn");
 const savingMessage = document.getElementById("savingMessage");
 const savingList = document.getElementById("savingList");
 
-// Contas especiais
+// Especiais
 const specialDescription = document.getElementById("specialDescription");
 const specialAmount = document.getElementById("specialAmount");
 const specialDate = document.getElementById("specialDate");
@@ -79,11 +80,9 @@ const themeToggleBtn = document.getElementById("themeToggleBtn");
 const themeToggleIcon = document.getElementById("themeToggleIcon");
 const themeToggleText = document.getElementById("themeToggleText");
 
-// === 3. TEMA (CLARO/ESCURO) ===
+// === 3. TEMA CLARO/ESCURO ===
 function applyTheme(theme) {
-  const root = document.documentElement;
-  root.setAttribute("data-theme", theme);
-
+  document.documentElement.setAttribute("data-theme", theme);
   if (theme === "light") {
     themeToggleIcon.textContent = "🌞";
     themeToggleText.textContent = "Modo claro";
@@ -107,49 +106,54 @@ themeToggleBtn.addEventListener("click", () => {
 
 initTheme();
 
-// === 4. FUNÇÕES DE DATA / MÊS ===
+// === 4. DATA / MÊS / ANO ===
 function getMonthRefFromDateStr(dateStr) {
   if (!dateStr) return null;
   const [year, month] = dateStr.split("-");
   return `${year}-${month}`;
 }
 
-function getCurrentMonthRef() {
+function getCurrentYearMonth() {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-// meses: 2 anteriores, atual, próximo
-function getMonthOptions() {
-  const today = new Date();
-  const options = [];
-  for (let offset = -2; offset <= 1; offset++) {
-    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    options.push(`${year}-${month}`);
-  }
-  return options;
-}
-
-function formatCurrency(value) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function getPaymentGroupLabel(pg) {
-  if (pg === 1) return "Pagamentos dia 5";
-  if (pg === 2) return "Pagamentos dia 10";
-  if (pg === 3) return "Pagamentos dia 20";
-  return "-";
+  return {
+    year: today.getFullYear(),
+    month: today.getMonth() + 1,
+  };
 }
 
 function formatMonthLabel(monthRef) {
   const [year, month] = monthRef.split("-");
-  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
-  const formatter = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" });
-  return formatter.format(date);
+  const d = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
+  return new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(d);
+}
+
+function getSelectedYear() {
+  const y = parseInt(yearFilter.value, 10);
+  if (!isNaN(y)) return y;
+  return getCurrentYearMonth().year;
+}
+
+function getSelectedMonth() {
+  const m = parseInt(monthFilter.value, 10);
+  if (!isNaN(m) && m >= 1 && m <= 12) return m;
+  return getCurrentYearMonth().month;
+}
+
+function getSelectedMonthRef() {
+  const y = getSelectedYear();
+  const m = String(getSelectedMonth()).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+function formatCurrency(v) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function getPaymentGroupLabel(v) {
+  if (v === 1) return "Pagamentos dia 5";
+  if (v === 2) return "Pagamentos dia 10";
+  if (v === 3) return "Pagamentos dia 20";
+  return "-";
 }
 
 // === 5. AUTENTICAÇÃO ===
@@ -170,8 +174,8 @@ registerBtn.addEventListener("click", async () => {
     await auth.createUserWithEmailAndPassword(email, password);
     authMessage.textContent = "Conta criada com sucesso! Você já está logado.";
     authMessage.classList.add("success");
-  } catch (error) {
-    authMessage.textContent = "Erro ao criar conta: " + error.message;
+  } catch (err) {
+    authMessage.textContent = "Erro ao criar conta: " + err.message;
     authMessage.classList.add("error");
   }
 });
@@ -191,8 +195,8 @@ loginBtn.addEventListener("click", async () => {
 
   try {
     await auth.signInWithEmailAndPassword(email, password);
-  } catch (error) {
-    authMessage.textContent = "Erro ao entrar: " + error.message;
+  } catch (err) {
+    authMessage.textContent = "Erro ao entrar: " + err.message;
     authMessage.classList.add("error");
   }
 });
@@ -218,7 +222,7 @@ auth.onAuthStateChanged((user) => {
     authSection.style.display = "none";
     appSection.style.display = "block";
     logoutBtn.style.display = "inline-flex";
-    initAppForUser();
+    initApp();
   } else {
     currentUser = null;
     authSection.style.display = "block";
@@ -229,27 +233,38 @@ auth.onAuthStateChanged((user) => {
   }
 });
 
-// === 7. INICIALIZAÇÃO DO APP APÓS LOGIN ===
-function initAppForUser() {
-  const currentMonth = getCurrentMonthRef();
-  currentMonthLabel.textContent = `Mês atual: ${formatMonthLabel(currentMonth)}`;
+// === 7. INICIALIZAÇÃO DO APP ===
+function initApp() {
+  const { year, month } = getCurrentYearMonth();
+  const monthRef = `${year}-${String(month).padStart(2, "0")}`;
+  currentMonthLabel.textContent = `Mês atual: ${formatMonthLabel(monthRef)}`;
 
-  // Preenche opções de mês (2 anteriores, atual e próximo)
-  const months = getMonthOptions();
-  monthFilter.innerHTML = "";
-  months.forEach((m) => {
-    const option = document.createElement("option");
-    option.value = m;
-    const isCurrent = m === currentMonth;
-    option.textContent = isCurrent ? `${m} (atual)` : m;
-    monthFilter.appendChild(option);
-  });
-  // Garante que o mês atual fica selecionado
-  monthFilter.value = currentMonth;
-
+  // Preenche anos (ano anterior, atual, próximo)
   if (!filtersInitialized) {
-    monthFilter.addEventListener("change", reloadAllData);
-    paymentGroupFilter.addEventListener("change", reloadAllData);
+    yearFilter.innerHTML = "";
+    const years = [year - 1, year, year + 1];
+    years.forEach((y) => {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      if (y === year) opt.selected = true;
+      yearFilter.appendChild(opt);
+    });
+
+    // Preenche meses (1..12)
+    monthFilter.innerHTML = "";
+    for (let m = 1; m <= 12; m++) {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = `${String(m).padStart(2, "0")}`;
+      if (m === month) opt.selected = true;
+      monthFilter.appendChild(opt);
+    }
+
+    filterApplyBtn.addEventListener("click", () => {
+      reloadAllData();
+    });
+
     filtersInitialized = true;
   }
 
@@ -261,20 +276,16 @@ function initAppForUser() {
   reloadAllData();
 }
 
-function getSelectedMonthRef() {
-  return monthFilter.value || getCurrentMonthRef();
-}
-
+// === 8. CARREGAR DADOS ===
 function getSelectedPaymentGroup() {
   const val = paymentGroupFilter.value;
   if (val === "all") return null;
-  return parseInt(val, 10);
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? null : parsed;
 }
 
-// === 8. CARREGAR DASHBOARD E LISTAS ===
 async function reloadAllData() {
   if (!currentUser) return;
-
   const monthRef = getSelectedMonthRef();
   const paymentGroup = getSelectedPaymentGroup();
 
@@ -285,10 +296,9 @@ async function reloadAllData() {
       loadSavings(monthRef),
       loadSpecial(monthRef),
     ]);
-
     updateDashboardTotals();
-  } catch (error) {
-    console.error("Erro ao recarregar dados:", error);
+  } catch (err) {
+    console.error("Erro ao carregar dados:", err);
   }
 }
 
@@ -302,7 +312,7 @@ async function loadIncomes(monthRef, paymentGroup) {
     query = query.where("paymentGroup", "==", paymentGroup);
   }
 
-  const snap = await query.orderBy("date", "asc").get();
+  const snap = await query.get();
   lastIncomes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   incomeList.innerHTML = "";
@@ -341,13 +351,13 @@ async function loadExpenses(monthRef, paymentGroup) {
     .collection("expenses")
     .where("userId", "==", currentUser.uid)
     .where("monthRef", "==", monthRef)
-    .where("isSpecial", "==", false); // fluxo principal
+    .where("isSpecial", "==", false);
 
   if (paymentGroup != null) {
     query = query.where("paymentGroup", "==", paymentGroup);
   }
 
-  const snap = await query.orderBy("dueDate", "asc").get();
+  const snap = await query.get();
   lastExpenses = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   expenseList.innerHTML = "";
@@ -390,7 +400,6 @@ async function loadSavings(monthRef) {
     .collection("savings")
     .where("userId", "==", currentUser.uid)
     .where("monthRef", "==", monthRef)
-    .orderBy("date", "asc")
     .get();
 
   lastSavings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -431,7 +440,6 @@ async function loadSpecial(monthRef) {
     .where("userId", "==", currentUser.uid)
     .where("monthRef", "==", monthRef)
     .where("isSpecial", "==", true)
-    .orderBy("dueDate", "asc")
     .get();
 
   lastSpecial = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -479,7 +487,7 @@ function updateDashboardTotals() {
   cardBalance.textContent = formatCurrency(balance);
 }
 
-// === 9. SALVAR RECEITAS / DESPESAS / POUPANÇA / ESPECIAIS ===
+// === 9. SALVAR REGISTROS ===
 saveIncomeBtn.addEventListener("click", async () => {
   if (!currentUser) return;
   incomeMessage.textContent = "";
@@ -518,8 +526,9 @@ saveIncomeBtn.addEventListener("click", async () => {
     incomeReceived.checked = false;
 
     await reloadAllData();
-  } catch (error) {
-    incomeMessage.textContent = "Erro ao salvar receita: " + error.message;
+  } catch (err) {
+    console.error(err);
+    incomeMessage.textContent = "Erro ao salvar receita: " + err.message;
     incomeMessage.classList.add("error");
   }
 });
@@ -571,8 +580,9 @@ saveExpenseBtn.addEventListener("click", async () => {
     expenseInstallmentTotal.value = "";
 
     await reloadAllData();
-  } catch (error) {
-    expenseMessage.textContent = "Erro ao salvar despesa: " + error.message;
+  } catch (err) {
+    console.error(err);
+    expenseMessage.textContent = "Erro ao salvar despesa: " + err.message;
     expenseMessage.classList.add("error");
   }
 });
@@ -613,8 +623,9 @@ saveSavingBtn.addEventListener("click", async () => {
     savingNote.value = "";
 
     await reloadAllData();
-  } catch (error) {
-    savingMessage.textContent = "Erro ao salvar: " + error.message;
+  } catch (err) {
+    console.error(err);
+    savingMessage.textContent = "Erro ao salvar: " + err.message;
     savingMessage.classList.add("error");
   }
 });
@@ -658,13 +669,14 @@ saveSpecialBtn.addEventListener("click", async () => {
     specialDate.value = "";
 
     await reloadAllData();
-  } catch (error) {
-    specialMessage.textContent = "Erro ao salvar: " + error.message;
+  } catch (err) {
+    console.error(err);
+    specialMessage.textContent = "Erro ao salvar: " + err.message;
     specialMessage.classList.add("error");
   }
 });
 
-// === 10. TABS ===
+// === 10. ABAS ===
 function setupTabs() {
   const tabs = document.querySelectorAll(".tab");
   const contents = document.querySelectorAll(".tab-content");

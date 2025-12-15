@@ -1,16 +1,16 @@
-/* TEMAS (modo claro/escuro) */
+/* TEMAS (claro / escuro) */
 :root {
-  --bg: #050816;
-  --bg-card: #0f172a;
+  --bg: #020617;
+  --bg-card: #020617;
   --bg-soft: #020617;
   --primary: #22c55e;
-  --primary-soft: rgba(34, 197, 94, 0.15);
+  --primary-soft: rgba(34, 197, 94, 0.14);
   --accent: #38bdf8;
   --danger: #f97373;
   --text: #e5e7eb;
   --text-muted: #9ca3af;
   --border: #1f2937;
-  --radius: 12px;
+  --radius: 14px;
 }
 
 :root[data-theme="light"] {
@@ -18,7 +18,7 @@
   --bg-card: #ffffff;
   --bg-soft: #f9fafb;
   --primary: #16a34a;
-  --primary-soft: rgba(22, 163, 74, 0.14);
+  --primary-soft: rgba(22, 163, 74, 0.16);
   --accent: #0ea5e9;
   --danger: #ef4444;
   --text: #111827;
@@ -26,18 +26,18 @@
   --border: #d1d5db;
 }
 
+/* RESET / BASE */
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-/* BASE */
-
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #1d283a, #020617);
+  background: radial-gradient(circle at top, #1f2937, var(--bg));
   color: var(--text);
 }
 
@@ -51,28 +51,51 @@ body {
   flex-direction: column;
 }
 
+/* TOPO */
+
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
 
 :root[data-theme="light"] .topbar {
-  background: rgba(249, 250, 251, 0.9);
+  background: rgba(249, 250, 251, 0.92);
 }
 
-.logo {
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-icon {
+  font-size: 1.4rem;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-title {
   font-weight: 700;
   letter-spacing: 0.03em;
-  margin-right: 0.75rem;
+  font-size: 0.98rem;
+}
+
+.logo-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .month-label {
-  font-size: 0.85rem;
+  margin-left: 1rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
@@ -82,6 +105,8 @@ body {
   align-items: center;
 }
 
+/* MAIN / CARDS */
+
 .main {
   flex: 1;
   padding: 1.25rem;
@@ -90,27 +115,26 @@ body {
   margin: 0 auto 1.5rem;
 }
 
-/* CARDS & LAYOUT */
-
 .card {
-  background: radial-gradient(circle at top left, var(--bg-card), var(--bg-soft));
+  background: radial-gradient(circle at top left, #020617, #000000);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   padding: 1rem 1.25rem;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.45);
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.8);
   margin-bottom: 1rem;
 }
 
 :root[data-theme="light"] .card {
-  box-shadow: 0 14px 30px rgba(148, 163, 184, 0.35);
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(148, 163, 184, 0.35);
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
 }
 
 .auth-card {
@@ -119,7 +143,7 @@ body {
 }
 
 h1, h2, h3 {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.5rem;
 }
 
 .muted {
@@ -140,9 +164,9 @@ h1, h2, h3 {
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.15);
   color: var(--text-muted);
 }
 
@@ -152,7 +176,7 @@ h1, h2, h3 {
 }
 
 .badge.soft.danger {
-  background: rgba(239, 68, 68, 0.14);
+  background: rgba(239, 68, 68, 0.15);
   color: var(--danger);
 }
 
@@ -181,7 +205,7 @@ textarea {
   background: var(--bg-soft);
   border-radius: 999px;
   border: 1px solid var(--border);
-  padding: 0.55rem 0.9rem;
+  padding: 0.6rem 0.95rem;
   color: var(--text);
   font-size: 0.9rem;
   outline: none;
@@ -196,7 +220,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.45);
 }
 
 .field.checkbox {
@@ -239,25 +263,29 @@ textarea:focus {
   font-size: 0.8rem;
 }
 
+.small-btn {
+  padding-inline: 1.2rem;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), #16a34a);
-  border-color: rgba(34, 197, 94, 0.4);
+  border-color: rgba(34, 197, 94, 0.5);
   color: #022c22;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.35);
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.4);
 }
 
 .btn-secondary {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(148, 163, 184, 0.16);
   border-color: rgba(148, 163, 184, 0.5);
   color: var(--text);
 }
 
 .btn-secondary:hover {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.3);
 }
 
 .btn-ghost {
@@ -267,11 +295,11 @@ textarea:focus {
 }
 
 .btn-ghost:hover {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
 }
 
 :root[data-theme="light"] .btn-ghost:hover {
-  background: rgba(209, 213, 219, 0.5);
+  background: rgba(209, 213, 219, 0.6);
 }
 
 .btn.full {
@@ -293,14 +321,14 @@ textarea:focus {
   color: var(--primary);
 }
 
-/* DASHBOARD */
+/* DASHBOARD / FILTROS */
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: flex-end;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
 .filters label {
@@ -311,7 +339,7 @@ textarea:focus {
 }
 
 .filters select {
-  min-width: 180px;
+  min-width: 130px;
 }
 
 /* CARDS RESUMO */
@@ -323,8 +351,8 @@ textarea:focus {
 }
 
 .mini-card {
-  background: radial-gradient(circle at top, var(--bg-soft), var(--bg-card));
-  border-radius: 16px;
+  background: radial-gradient(circle at top, #020617, #020617);
+  border-radius: 18px;
   border: 1px solid rgba(31, 41, 55, 0.9);
   padding: 0.75rem 0.9rem;
   display: flex;
@@ -333,6 +361,7 @@ textarea:focus {
 }
 
 :root[data-theme="light"] .mini-card {
+  background: #ffffff;
   border-color: rgba(209, 213, 219, 1);
 }
 
@@ -342,7 +371,7 @@ textarea:focus {
 }
 
 .mini-value {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
 }
 
@@ -362,22 +391,22 @@ textarea:focus {
 .tab {
   flex: 1;
   min-width: 140px;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.96);
   color: var(--text-muted);
   cursor: pointer;
   font-size: 0.85rem;
 }
 
 :root[data-theme="light"] .tab {
-  background: rgba(243, 244, 246, 0.95);
+  background: rgba(243, 244, 246, 0.98);
 }
 
 .tab.active {
   background: var(--primary-soft);
-  border-color: rgba(34, 197, 94, 0.6);
+  border-color: rgba(34, 197, 94, 0.7);
   color: var(--primary);
 }
 
@@ -414,10 +443,10 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(15, 23, 42, 0.98);
   border-radius: 999px;
   padding: 0.5rem 0.8rem;
-  border: 1px solid rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(31, 41, 55, 0.95);
   font-size: 0.85rem;
 }
 

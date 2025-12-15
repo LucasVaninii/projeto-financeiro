@@ -15,10 +15,16 @@
 
 <body>
     <div class="app-shell">
-        <!-- BARRA SUPERIOR -->
+        <!-- TOPO -->
         <header class="topbar">
             <div class="topbar-left">
-                <span class="logo">💰 Minha Gestão</span>
+                <div class="logo-wrap">
+                    <span class="logo-icon">💰</span>
+                    <div class="logo-text">
+                        <span class="logo-title">Minha Gestão</span>
+                        <span class="logo-subtitle">Controle financeiro pessoal</span>
+                    </div>
+                </div>
                 <span id="currentMonthLabel" class="month-label"></span>
             </div>
             <div class="topbar-right">
@@ -32,10 +38,10 @@
 
         <!-- CONTEÚDO -->
         <main class="main">
-            <!-- AUTENTICAÇÃO -->
+            <!-- LOGIN -->
             <section id="auth-section" class="card auth-card">
-                <h2>Acessar minha conta</h2>
-                <p class="muted">Esse painel é apenas para você. Guarde bem seu e-mail e senha.</p>
+                <h2>Entrar na minha gestão</h2>
+                <p class="muted">Apenas você terá acesso às suas informações financeiras.</p>
                 <label class="field">
                     <span>E-mail</span>
                     <input id="email" type="email" placeholder="voce@exemplo.com" />
@@ -51,17 +57,26 @@
                 <p id="authMessage" class="message"></p>
             </section>
 
-            <!-- APP -->
+            <!-- APP LOGADO -->
             <section id="app-section" style="display:none;">
-                <!-- DASHBOARD RESUMO -->
+                <!-- DASHBOARD -->
                 <section class="card">
                     <div class="card-header">
-                        <h2>Resumo financeiro</h2>
-                        <span class="badge">Visão rápida</span>
+                        <div>
+                            <h2>Visão geral</h2>
+                            <p class="muted small">Selecione o ano, mês e grupo de pagamento e clique em “Aplicar
+                                filtros”.</p>
+                        </div>
+                        <span class="badge">Resumo</span>
                     </div>
+
                     <div class="filters">
                         <label>
-                            Mês (atual, 2 anteriores e o próximo):
+                            Ano:
+                            <select id="yearFilter"></select>
+                        </label>
+                        <label>
+                            Mês:
                             <select id="monthFilter"></select>
                         </label>
                         <label>
@@ -73,7 +88,11 @@
                                 <option value="3">Pagamentos dia 20</option>
                             </select>
                         </label>
+                        <button id="filterApplyBtn" class="btn btn-primary small-btn" type="button">
+                            Aplicar filtros
+                        </button>
                     </div>
+
                     <div class="cards-grid">
                         <div class="mini-card">
                             <span class="mini-label">Receitas no mês</span>
@@ -102,7 +121,7 @@
                     <button class="tab" data-tab="tab-special">Contas especiais</button>
                 </nav>
 
-                <!-- CONTEÚDO DAS ABAS -->
+                <!-- RECEITAS -->
                 <section id="tab-incomes" class="tab-content active">
                     <div class="layout-two">
                         <div class="card">
@@ -139,13 +158,14 @@
                         </div>
                         <div class="card">
                             <div class="card-header">
-                                <h3>Receitas do mês selecionado</h3>
+                                <h3>Receitas do mês filtrado</h3>
                             </div>
                             <ul id="incomeList" class="list"></ul>
                         </div>
                     </div>
                 </section>
 
+                <!-- DESPESAS -->
                 <section id="tab-expenses" class="tab-content">
                     <div class="layout-two">
                         <div class="card">
@@ -196,15 +216,16 @@
                         </div>
                         <div class="card">
                             <div class="card-header">
-                                <h3>Despesas do mês selecionado (fluxo)</h3>
+                                <h3>Despesas do mês filtrado (fluxo)</h3>
                                 <span class="badge outline">Sem especiais</span>
                             </div>
-                            <p class="muted small">Contas especiais ficam em uma aba separada.</p>
+                            <p class="muted small">Contas especiais aparecem em uma aba separada.</p>
                             <ul id="expenseList" class="list"></ul>
                         </div>
                     </div>
                 </section>
 
+                <!-- POUPANÇA -->
                 <section id="tab-savings" class="tab-content">
                     <div class="layout-two">
                         <div class="card">
@@ -233,13 +254,14 @@
                         </div>
                         <div class="card">
                             <div class="card-header">
-                                <h3>Valores guardados do mês selecionado</h3>
+                                <h3>Valores guardados do mês filtrado</h3>
                             </div>
                             <ul id="savingList" class="list"></ul>
                         </div>
                     </div>
                 </section>
 
+                <!-- ESPECIAIS -->
                 <section id="tab-special" class="tab-content">
                     <div class="layout-two">
                         <div class="card">
@@ -247,8 +269,8 @@
                                 <h3>Nova conta especial</h3>
                                 <span class="badge soft">Anotação</span>
                             </div>
-                            <p class="muted small">Essas contas não entram no fluxo financeiro, são apenas anotações.
-                            </p>
+                            <p class="muted small">Essas contas não entram no fluxo financeiro, servem apenas como
+                                registro.</p>
                             <label class="field">
                                 <span>Descrição</span>
                                 <input id="specialDescription" placeholder="Observação especial" />
@@ -266,7 +288,7 @@
                         </div>
                         <div class="card">
                             <div class="card-header">
-                                <h3>Contas especiais do mês selecionado</h3>
+                                <h3>Contas especiais do mês filtrado</h3>
                             </div>
                             <ul id="specialList" class="list"></ul>
                         </div>
