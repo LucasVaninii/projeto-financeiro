@@ -24,7 +24,6 @@ const logoutBtn = document.getElementById("logoutBtn");
 const authMessage = document.getElementById("authMessage");
 
 const currentMonthLabel = document.getElementById("currentMonthLabel");
-const yearFilter = document.getElementById("yearFilter");
 const monthFilter = document.getElementById("monthFilter");
 const paymentGroupFilter = document.getElementById("paymentGroupFilter");
 const filterApplyBtn = document.getElementById("filterApplyBtn");
@@ -40,6 +39,7 @@ const incomeDescription = document.getElementById("incomeDescription");
 const incomeAmount = document.getElementById("incomeAmount");
 const incomeDate = document.getElementById("incomeDate");
 const incomePaymentGroup = document.getElementById("incomePaymentGroup");
+const incomeRecurrentMonths = document.getElementById("incomeRecurrentMonths");
 const incomeReceived = document.getElementById("incomeReceived");
 const saveIncomeBtn = document.getElementById("saveIncomeBtn");
 const incomeMessage = document.getElementById("incomeMessage");
@@ -51,9 +51,11 @@ const expenseAmount = document.getElementById("expenseAmount");
 const expenseDueDate = document.getElementById("expenseDueDate");
 const expenseType = document.getElementById("expenseType");
 const expensePaymentGroup = document.getElementById("expensePaymentGroup");
+const expenseRecurrentMonths = document.getElementById("expenseRecurrentMonths");
 const expenseInstallment = document.getElementById("expenseInstallment");
 const expenseInstallmentCurrent = document.getElementById("expenseInstallmentCurrent");
 const expenseInstallmentTotal = document.getElementById("expenseInstallmentTotal");
+const expensePaid = document.getElementById("expensePaid");
 const saveExpenseBtn = document.getElementById("saveExpenseBtn");
 const expenseMessage = document.getElementById("expenseMessage");
 const expenseList = document.getElementById("expenseList");
@@ -71,6 +73,10 @@ const savingList = document.getElementById("savingList");
 const specialDescription = document.getElementById("specialDescription");
 const specialAmount = document.getElementById("specialAmount");
 const specialDate = document.getElementById("specialDate");
+const specialRecurrentMonths = document.getElementById("specialRecurrentMonths");
+const specialInstallment = document.getElementById("specialInstallment");
+const specialInstallmentCurrent = document.getElementById("specialInstallmentCurrent");
+const specialInstallmentTotal = document.getElementById("specialInstallmentTotal");
 const saveSpecialBtn = document.getElementById("saveSpecialBtn");
 const specialMessage = document.getElementById("specialMessage");
 const specialList = document.getElementById("specialList");
@@ -106,43 +112,37 @@ themeToggleBtn.addEventListener("click", () => {
 
 initTheme();
 
-// === 4. DATA / MÊS / ANO ===
-function getMonthRefFromDateStr(dateStr) {
-  if (!dateStr) return null;
-  const [year, month] = dateStr.split("-");
+// === 4. DATA / MÊS ===
+function getCurrentMonthRef() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
 
-function getCurrentYearMonth() {
+// 2 meses anteriores, atual e 2 próximos
+function getMonthWindowRefs() {
   const today = new Date();
-  return {
-    year: today.getFullYear(),
-    month: today.getMonth() + 1,
-  };
+  const refs = [];
+  for (let offset = -2; offset <= 2; offset++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    refs.push(`${y}-${m}`);
+  }
+  return refs;
+}
+
+function getMonthRefFromDateStr(dateStr) {
+  if (!dateStr) return null;
+  const [y, m] = dateStr.split("-");
+  return `${y}-${m}`;
 }
 
 function formatMonthLabel(monthRef) {
-  const [year, month] = monthRef.split("-");
-  const d = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
+  const [y, m] = monthRef.split("-");
+  const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
   return new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(d);
-}
-
-function getSelectedYear() {
-  const y = parseInt(yearFilter.value, 10);
-  if (!isNaN(y)) return y;
-  return getCurrentYearMonth().year;
-}
-
-function getSelectedMonth() {
-  const m = parseInt(monthFilter.value, 10);
-  if (!isNaN(m) && m >= 1 && m <= 12) return m;
-  return getCurrentYearMonth().month;
-}
-
-function getSelectedMonthRef() {
-  const y = getSelectedYear();
-  const m = String(getSelectedMonth()).padStart(2, "0");
-  return `${y}-${m}`;
 }
 
 function formatCurrency(v) {
@@ -154,6 +154,16 @@ function getPaymentGroupLabel(v) {
   if (v === 2) return "Pagamentos dia 10";
   if (v === 3) return "Pagamentos dia 20";
   return "-";
+}
+
+function addMonthsToDateStr(dateStr, monthsToAdd) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const base = new Date(y, m - 1, d);
+  base.setMonth(base.getMonth() + monthsToAdd);
+  const ny = base.getFullYear();
+  const nm = String(base.getMonth() + 1).padStart(2, "0");
+  const nd = String(base.getDate()).padStart(2, "0");
+  return `${ny}-${nm}-${nd}`;
 }
 
 // === 5. AUTENTICAÇÃO ===
@@ -207,7 +217,6 @@ logoutBtn.addEventListener("click", async () => {
 
 // === 6. ESTADO GLOBAL ===
 let currentUser = null;
-let filtersInitialized = false;
 let tabsInitialized = false;
 
 let lastIncomes = [];
@@ -235,38 +244,23 @@ auth.onAuthStateChanged((user) => {
 
 // === 7. INICIALIZAÇÃO DO APP ===
 function initApp() {
-  const { year, month } = getCurrentYearMonth();
-  const monthRef = `${year}-${String(month).padStart(2, "0")}`;
-  currentMonthLabel.textContent = `Mês atual: ${formatMonthLabel(monthRef)}`;
+  const currentMonthRef = getCurrentMonthRef();
+  currentMonthLabel.textContent = `Mês atual: ${formatMonthLabel(currentMonthRef)}`;
 
-  // Preenche anos (ano anterior, atual, próximo)
-  if (!filtersInitialized) {
-    yearFilter.innerHTML = "";
-    const years = [year - 1, year, year + 1];
-    years.forEach((y) => {
-      const opt = document.createElement("option");
-      opt.value = y;
-      opt.textContent = y;
-      if (y === year) opt.selected = true;
-      yearFilter.appendChild(opt);
-    });
+  // Preenche mês (2 anteriores, atual, 2 próximos)
+  const refs = getMonthWindowRefs();
+  monthFilter.innerHTML = "";
+  refs.forEach((ref) => {
+    const opt = document.createElement("option");
+    opt.value = ref;
+    opt.textContent = formatMonthLabel(ref);
+    if (ref === currentMonthRef) opt.selected = true;
+    monthFilter.appendChild(opt);
+  });
 
-    // Preenche meses (1..12)
-    monthFilter.innerHTML = "";
-    for (let m = 1; m <= 12; m++) {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = `${String(m).padStart(2, "0")}`;
-      if (m === month) opt.selected = true;
-      monthFilter.appendChild(opt);
-    }
-
-    filterApplyBtn.addEventListener("click", () => {
-      reloadAllData();
-    });
-
-    filtersInitialized = true;
-  }
+  filterApplyBtn.addEventListener("click", () => {
+    reloadAllData();
+  });
 
   if (!tabsInitialized) {
     setupTabs();
@@ -276,7 +270,10 @@ function initApp() {
   reloadAllData();
 }
 
-// === 8. CARREGAR DADOS ===
+function getSelectedMonthRef() {
+  return monthFilter.value || getCurrentMonthRef();
+}
+
 function getSelectedPaymentGroup() {
   const val = paymentGroupFilter.value;
   if (val === "all") return null;
@@ -284,6 +281,7 @@ function getSelectedPaymentGroup() {
   return isNaN(parsed) ? null : parsed;
 }
 
+// === 8. CARREGAR DADOS ===
 async function reloadAllData() {
   if (!currentUser) return;
   const monthRef = getSelectedMonthRef();
@@ -303,16 +301,16 @@ async function reloadAllData() {
 }
 
 async function loadIncomes(monthRef, paymentGroup) {
-  let query = db
+  let q = db
     .collection("incomes")
     .where("userId", "==", currentUser.uid)
     .where("monthRef", "==", monthRef);
 
   if (paymentGroup != null) {
-    query = query.where("paymentGroup", "==", paymentGroup);
+    q = q.where("paymentGroup", "==", paymentGroup);
   }
 
-  const snap = await query.get();
+  const snap = await q.get();
   lastIncomes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   incomeList.innerHTML = "";
@@ -335,9 +333,30 @@ async function loadIncomes(monthRef, paymentGroup) {
     left.appendChild(title);
     left.appendChild(meta);
 
-    const right = document.createElement("span");
-    right.className = "list-value";
-    right.textContent = formatCurrency(inc.amount || 0);
+    const right = document.createElement("div");
+    right.className = "list-right";
+
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "list-value";
+    valueSpan.textContent = formatCurrency(inc.amount || 0);
+
+    const chips = document.createElement("div");
+    chips.className = "chips";
+
+    const delChip = document.createElement("button");
+    delChip.className = "chip danger";
+    delChip.textContent = "Excluir";
+    delChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (!confirm("Excluir esta receita?")) return;
+      await db.collection("incomes").doc(inc.id).delete();
+      reloadAllData();
+    });
+
+    chips.appendChild(delChip);
+
+    right.appendChild(valueSpan);
+    right.appendChild(chips);
 
     li.appendChild(left);
     li.appendChild(right);
@@ -347,17 +366,17 @@ async function loadIncomes(monthRef, paymentGroup) {
 }
 
 async function loadExpenses(monthRef, paymentGroup) {
-  let query = db
+  let q = db
     .collection("expenses")
     .where("userId", "==", currentUser.uid)
     .where("monthRef", "==", monthRef)
     .where("isSpecial", "==", false);
 
   if (paymentGroup != null) {
-    query = query.where("paymentGroup", "==", paymentGroup);
+    q = q.where("paymentGroup", "==", paymentGroup);
   }
 
-  const snap = await query.get();
+  const snap = await q.get();
   lastExpenses = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   expenseList.innerHTML = "";
@@ -379,14 +398,46 @@ async function loadExpenses(monthRef, paymentGroup) {
     if (exp.isInstallment) {
       extra += ` • Parcela ${exp.installmentNumber}/${exp.installmentTotal}`;
     }
-    meta.textContent = `${exp.dueDate} • ${extra}`;
+    const paidStr = exp.paid ? "Pago" : "Em aberto";
+    meta.textContent = `${exp.dueDate} • ${extra} • ${paidStr}`;
 
     left.appendChild(title);
     left.appendChild(meta);
 
-    const right = document.createElement("span");
-    right.className = "list-value";
-    right.textContent = formatCurrency(exp.amount || 0);
+    const right = document.createElement("div");
+    right.className = "list-right";
+
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "list-value";
+    valueSpan.textContent = formatCurrency(exp.amount || 0);
+
+    const chips = document.createElement("div");
+    chips.className = "chips";
+
+    const toggleChip = document.createElement("button");
+    toggleChip.className = "chip success";
+    toggleChip.textContent = exp.paid ? "Marcar em aberto" : "Marcar pago";
+    toggleChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await db.collection("expenses").doc(exp.id).update({ paid: !exp.paid });
+      reloadAllData();
+    });
+
+    const delChip = document.createElement("button");
+    delChip.className = "chip danger";
+    delChip.textContent = "Excluir";
+    delChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (!confirm("Excluir esta despesa?")) return;
+      await db.collection("expenses").doc(exp.id).delete();
+      reloadAllData();
+    });
+
+    chips.appendChild(toggleChip);
+    chips.appendChild(delChip);
+
+    right.appendChild(valueSpan);
+    right.appendChild(chips);
 
     li.appendChild(left);
     li.appendChild(right);
@@ -423,9 +474,30 @@ async function loadSavings(monthRef) {
     left.appendChild(title);
     left.appendChild(meta);
 
-    const right = document.createElement("span");
-    right.className = "list-value";
-    right.textContent = formatCurrency(sav.amount || 0);
+    const right = document.createElement("div");
+    right.className = "list-right";
+
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "list-value";
+    valueSpan.textContent = formatCurrency(sav.amount || 0);
+
+    const chips = document.createElement("div");
+    chips.className = "chips";
+
+    const delChip = document.createElement("button");
+    delChip.className = "chip danger";
+    delChip.textContent = "Excluir";
+    delChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (!confirm("Excluir este valor guardado?")) return;
+      await db.collection("savings").doc(sav.id).delete();
+      reloadAllData();
+    });
+
+    chips.appendChild(delChip);
+
+    right.appendChild(valueSpan);
+    right.appendChild(chips);
 
     li.appendChild(left);
     li.appendChild(right);
@@ -458,14 +530,39 @@ async function loadSpecial(monthRef) {
 
     const meta = document.createElement("span");
     meta.className = "list-meta";
-    meta.textContent = `${sp.dueDate} • Conta especial`;
+    let extra = "Conta especial";
+    if (sp.isInstallment) {
+      extra += ` • Parcela ${sp.installmentNumber}/${sp.installmentTotal}`;
+    }
+    meta.textContent = `${sp.dueDate} • ${extra}`;
 
     left.appendChild(title);
     left.appendChild(meta);
 
-    const right = document.createElement("span");
-    right.className = "list-value";
-    right.textContent = formatCurrency(sp.amount || 0);
+    const right = document.createElement("div");
+    right.className = "list-right";
+
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "list-value";
+    valueSpan.textContent = formatCurrency(sp.amount || 0);
+
+    const chips = document.createElement("div");
+    chips.className = "chips";
+
+    const delChip = document.createElement("button");
+    delChip.className = "chip danger";
+    delChip.textContent = "Excluir";
+    delChip.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (!confirm("Excluir esta conta especial?")) return;
+      await db.collection("expenses").doc(sp.id).delete();
+      reloadAllData();
+    });
+
+    chips.appendChild(delChip);
+
+    right.appendChild(valueSpan);
+    right.appendChild(chips);
 
     li.appendChild(left);
     li.appendChild(right);
@@ -475,9 +572,9 @@ async function loadSpecial(monthRef) {
 }
 
 function updateDashboardTotals() {
-  const totalIncomes = lastIncomes.reduce((sum, i) => sum + (i.amount || 0), 0);
-  const totalExpenses = lastExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const totalSavings = lastSavings.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const totalIncomes = lastIncomes.reduce((s, i) => s + (i.amount || 0), 0);
+  const totalExpenses = lastExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+  const totalSavings = lastSavings.reduce((s, sv) => s + (sv.amount || 0), 0);
 
   const balance = totalIncomes - totalExpenses - totalSavings;
 
@@ -487,7 +584,72 @@ function updateDashboardTotals() {
   cardBalance.textContent = formatCurrency(balance);
 }
 
-// === 9. SALVAR REGISTROS ===
+// === 9. SALVAR REGISTROS (COM RECORRÊNCIA / PARCELAS) ===
+async function createIncomeSeries(base) {
+  const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
+  for (let i = 0; i < months; i++) {
+    const dateI = addMonthsToDateStr(base.date, i);
+    const monthRefI = getMonthRefFromDateStr(dateI);
+    await db.collection("incomes").add({
+      userId: currentUser.uid,
+      description: base.description,
+      amount: base.amount,
+      date: dateI,
+      paymentGroup: base.paymentGroup,
+      received: base.received,
+      monthRef: monthRefI,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+}
+
+async function createExpenseSeries(base) {
+  // Se for parcelada, ignora meses recorrentes e cria uma parcela por mês
+  if (base.isInstallment && base.installmentTotal > 1) {
+    for (let i = 0; i < base.installmentTotal; i++) {
+      const dateI = addMonthsToDateStr(base.dueDate, i);
+      const monthRefI = getMonthRefFromDateStr(dateI);
+      await db.collection("expenses").add({
+        userId: currentUser.uid,
+        description: base.description,
+        amount: base.amount,
+        dueDate: dateI,
+        type: base.type,
+        paymentGroup: base.paymentGroup,
+        isInstallment: true,
+        installmentNumber: i + 1,
+        installmentTotal: base.installmentTotal,
+        isSpecial: base.isSpecial || false,
+        paid: base.paid || false,
+        monthRef: monthRefI,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  } else {
+    // Recorrente simples
+    const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
+    for (let i = 0; i < months; i++) {
+      const dateI = addMonthsToDateStr(base.dueDate, i);
+      const monthRefI = getMonthRefFromDateStr(dateI);
+      await db.collection("expenses").add({
+        userId: currentUser.uid,
+        description: base.description,
+        amount: base.amount,
+        dueDate: dateI,
+        type: base.type,
+        paymentGroup: base.paymentGroup,
+        isInstallment: false,
+        installmentNumber: 1,
+        installmentTotal: 1,
+        isSpecial: base.isSpecial || false,
+        paid: base.paid || false,
+        monthRef: monthRefI,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  }
+}
+
 saveIncomeBtn.addEventListener("click", async () => {
   if (!currentUser) return;
   incomeMessage.textContent = "";
@@ -497,8 +659,8 @@ saveIncomeBtn.addEventListener("click", async () => {
   const amount = parseFloat(incomeAmount.value);
   const date = incomeDate.value;
   const paymentGroup = parseInt(incomePaymentGroup.value, 10);
+  const recurrentMonths = parseInt(incomeRecurrentMonths.value || "1", 10);
   const received = incomeReceived.checked;
-  const monthRef = getMonthRefFromDateStr(date);
 
   if (!description || isNaN(amount) || !date) {
     incomeMessage.textContent = "Preencha descrição, valor e data.";
@@ -507,22 +669,21 @@ saveIncomeBtn.addEventListener("click", async () => {
   }
 
   try {
-    await db.collection("incomes").add({
-      userId: currentUser.uid,
+    await createIncomeSeries({
       description,
       amount,
       date,
       paymentGroup,
+      recurrentMonths,
       received,
-      monthRef,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    incomeMessage.textContent = "Receita salva!";
+    incomeMessage.textContent = "Receita(s) salva(s)!";
     incomeMessage.classList.add("success");
     incomeDescription.value = "";
     incomeAmount.value = "";
     incomeDate.value = "";
+    incomeRecurrentMonths.value = "1";
     incomeReceived.checked = false;
 
     await reloadAllData();
@@ -543,10 +704,11 @@ saveExpenseBtn.addEventListener("click", async () => {
   const dueDate = expenseDueDate.value;
   const type = expenseType.value;
   const paymentGroup = parseInt(expensePaymentGroup.value, 10);
+  const recurrentMonths = parseInt(expenseRecurrentMonths.value || "1", 10);
   const isInstallment = expenseInstallment.checked;
-  const installmentNumber = parseInt(expenseInstallmentCurrent.value || "1", 10);
+  const installmentCurrent = parseInt(expenseInstallmentCurrent.value || "1", 10);
   const installmentTotal = parseInt(expenseInstallmentTotal.value || "1", 10);
-  const monthRef = getMonthRefFromDateStr(dueDate);
+  const paid = expensePaid.checked;
 
   if (!description || isNaN(amount) || !dueDate) {
     expenseMessage.textContent = "Preencha descrição, valor e vencimento.";
@@ -555,29 +717,32 @@ saveExpenseBtn.addEventListener("click", async () => {
   }
 
   try {
-    await db.collection("expenses").add({
-      userId: currentUser.uid,
+    await createExpenseSeries({
       description,
       amount,
       dueDate,
       type,
       paymentGroup,
+      recurrentMonths,
       isInstallment,
-      installmentNumber,
+      installmentNumber: installmentCurrent,
       installmentTotal,
+      paid,
       isSpecial: false,
-      monthRef,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    expenseMessage.textContent = "Despesa salva!";
+    expenseMessage.textContent = "Despesa(s) salva(s)!";
     expenseMessage.classList.add("success");
     expenseDescription.value = "";
     expenseAmount.value = "";
     expenseDueDate.value = "";
+    expenseType.value = "fixa";
+    expensePaymentGroup.value = "1";
+    expenseRecurrentMonths.value = "1";
     expenseInstallment.checked = false;
     expenseInstallmentCurrent.value = "";
     expenseInstallmentTotal.value = "";
+    expensePaid.checked = false;
 
     await reloadAllData();
   } catch (err) {
@@ -638,7 +803,10 @@ saveSpecialBtn.addEventListener("click", async () => {
   const description = specialDescription.value.trim();
   const amount = parseFloat(specialAmount.value);
   const date = specialDate.value;
-  const monthRef = getMonthRefFromDateStr(date);
+  const recurrentMonths = parseInt(specialRecurrentMonths.value || "1", 10);
+  const isInstallment = specialInstallment.checked;
+  const installmentCurrent = parseInt(specialInstallmentCurrent.value || "1", 10);
+  const installmentTotal = parseInt(specialInstallmentTotal.value || "1", 10);
 
   if (!description || isNaN(amount) || !date) {
     specialMessage.textContent = "Preencha descrição, valor e data.";
@@ -647,26 +815,29 @@ saveSpecialBtn.addEventListener("click", async () => {
   }
 
   try {
-    await db.collection("expenses").add({
-      userId: currentUser.uid,
+    await createExpenseSeries({
       description,
       amount,
       dueDate: date,
       type: "especial",
       paymentGroup: 0,
-      isInstallment: false,
-      installmentNumber: 1,
-      installmentTotal: 1,
+      recurrentMonths,
+      isInstallment,
+      installmentNumber: installmentCurrent,
+      installmentTotal,
+      paid: false,
       isSpecial: true,
-      monthRef,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    specialMessage.textContent = "Conta especial salva!";
+    specialMessage.textContent = "Conta(s) especial(is) salva(s)!";
     specialMessage.classList.add("success");
     specialDescription.value = "";
     specialAmount.value = "";
     specialDate.value = "";
+    specialRecurrentMonths.value = "1";
+    specialInstallment.checked = false;
+    specialInstallmentCurrent.value = "";
+    specialInstallmentTotal.value = "";
 
     await reloadAllData();
   } catch (err) {
@@ -684,10 +855,8 @@ function setupTabs() {
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       const targetId = tab.getAttribute("data-tab");
-
       tabs.forEach((t) => t.classList.remove("active"));
       contents.forEach((c) => c.classList.remove("active"));
-
       tab.classList.add("active");
       document.getElementById(targetId).classList.add("active");
     });

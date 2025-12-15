@@ -64,17 +64,15 @@
                     <div class="card-header">
                         <div>
                             <h2>Visão geral</h2>
-                            <p class="muted small">Selecione o ano, mês e grupo de pagamento e clique em “Aplicar
-                                filtros”.</p>
+                            <p class="muted small">
+                                Selecione o mês (2 anteriores, atual e 2 próximos) e o grupo de pagamento. Clique em
+                                “Aplicar filtros”.
+                            </p>
                         </div>
                         <span class="badge">Resumo</span>
                     </div>
 
                     <div class="filters">
-                        <label>
-                            Ano:
-                            <select id="yearFilter"></select>
-                        </label>
                         <label>
                             Mês:
                             <select id="monthFilter"></select>
@@ -149,6 +147,10 @@
                                     <option value="3">Pagamentos dia 20</option>
                                 </select>
                             </label>
+                            <label class="field">
+                                <span>Meses recorrentes (incluindo este)</span>
+                                <input id="incomeRecurrentMonths" type="number" min="1" value="1" />
+                            </label>
                             <label class="field checkbox">
                                 <input id="incomeReceived" type="checkbox" />
                                 <span>Já recebido</span>
@@ -201,6 +203,10 @@
                                     <option value="3">Pagamentos dia 20</option>
                                 </select>
                             </label>
+                            <label class="field">
+                                <span>Meses recorrentes (incluindo este)</span>
+                                <input id="expenseRecurrentMonths" type="number" min="1" value="1" />
+                            </label>
                             <div class="field-inline">
                                 <label class="field checkbox">
                                     <input id="expenseInstallment" type="checkbox" />
@@ -211,6 +217,15 @@
                                 <input id="expenseInstallmentTotal" type="number" min="1"
                                     placeholder="Total de parcelas" />
                             </div>
+                            <label class="field checkbox">
+                                <input id="expensePaid" type="checkbox" />
+                                <span>Já pago</span>
+                            </label>
+                            <p class="muted small">
+                                Dica: use <strong>parcelas</strong> ou <strong>meses recorrentes</strong>. Se marcar
+                                parcelada, os meses
+                                recorrentes serão ignorados.
+                            </p>
                             <button id="saveExpenseBtn" class="btn btn-primary full">Salvar despesa</button>
                             <p id="expenseMessage" class="message"></p>
                         </div>
@@ -269,8 +284,10 @@
                                 <h3>Nova conta especial</h3>
                                 <span class="badge soft">Anotação</span>
                             </div>
-                            <p class="muted small">Essas contas não entram no fluxo financeiro, servem apenas como
-                                registro.</p>
+                            <p class="muted small">
+                                Essas contas não entram no fluxo financeiro, servem apenas como registro (mas podem ser
+                                recorrentes ou parceladas).
+                            </p>
                             <label class="field">
                                 <span>Descrição</span>
                                 <input id="specialDescription" placeholder="Observação especial" />
@@ -283,6 +300,20 @@
                                 <span>Data</span>
                                 <input id="specialDate" type="date" />
                             </label>
+                            <label class="field">
+                                <span>Meses recorrentes (incluindo este)</span>
+                                <input id="specialRecurrentMonths" type="number" min="1" value="1" />
+                            </label>
+                            <div class="field-inline">
+                                <label class="field checkbox">
+                                    <input id="specialInstallment" type="checkbox" />
+                                    <span>Parcelada</span>
+                                </label>
+                                <input id="specialInstallmentCurrent" type="number" min="1"
+                                    placeholder="Parcela atual" />
+                                <input id="specialInstallmentTotal" type="number" min="1"
+                                    placeholder="Total de parcelas" />
+                            </div>
                             <button id="saveSpecialBtn" class="btn btn-primary full">Salvar conta especial</button>
                             <p id="specialMessage" class="message"></p>
                         </div>
