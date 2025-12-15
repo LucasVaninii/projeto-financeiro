@@ -64,7 +64,7 @@
             <!-- APP LOGADO -->
             <section id="app-section" style="display:none;">
                 <!-- DASHBOARD -->
-                <section class="card">
+                <section class="card glass-card">
                     <div class="card-header">
                         <div>
                             <h2>Visão geral</h2>
@@ -73,7 +73,7 @@
                                 “Aplicar filtros”.
                             </p>
                         </div>
-                        <span class="badge">Resumo</span>
+                        <span class="badge pill">Resumo</span>
                     </div>
 
                     <div class="filters">
@@ -96,19 +96,19 @@
                     </div>
 
                     <div class="cards-grid">
-                        <div class="mini-card">
+                        <div class="mini-card income-card">
                             <span class="mini-label">Receitas no mês</span>
                             <span id="card-totalIncomes" class="mini-value">R$ 0,00</span>
                         </div>
-                        <div class="mini-card">
+                        <div class="mini-card expense-card">
                             <span class="mini-label">Despesas (fluxo)</span>
                             <span id="card-totalExpenses" class="mini-value">R$ 0,00</span>
                         </div>
-                        <div class="mini-card">
+                        <div class="mini-card balance-card">
                             <span class="mini-label">Saldo previsto</span>
                             <span id="card-balance" class="mini-value highlight">R$ 0,00</span>
                         </div>
-                        <div class="mini-card">
+                        <div class="mini-card saving-card">
                             <span class="mini-label">Guardado no mês</span>
                             <span id="card-savings" class="mini-value">R$ 0,00</span>
                         </div>
@@ -126,7 +126,7 @@
                 <!-- RECEITAS -->
                 <section id="tab-incomes" class="tab-content active">
                     <div class="layout-two">
-                        <div class="card">
+                        <div class="card glass-card">
                             <div class="card-header">
                                 <h3>Nova receita</h3>
                                 <span class="badge soft">Entrada</span>
@@ -162,7 +162,7 @@
                             <button id="saveIncomeBtn" class="btn btn-primary full">Salvar receita</button>
                             <p id="incomeMessage" class="message"></p>
                         </div>
-                        <div class="card">
+                        <div class="card list-card glass-card">
                             <div class="card-header">
                                 <h3>Receitas do mês filtrado</h3>
                             </div>
@@ -174,7 +174,7 @@
                 <!-- DESPESAS -->
                 <section id="tab-expenses" class="tab-content">
                     <div class="layout-two">
-                        <div class="card">
+                        <div class="card glass-card">
                             <div class="card-header">
                                 <h3>Nova despesa</h3>
                                 <span class="badge soft danger">Saída</span>
@@ -233,7 +233,7 @@
                             <button id="saveExpenseBtn" class="btn btn-primary full">Salvar despesa</button>
                             <p id="expenseMessage" class="message"></p>
                         </div>
-                        <div class="card">
+                        <div class="card list-card glass-card">
                             <div class="card-header">
                                 <h3>Despesas do mês filtrado (fluxo)</h3>
                                 <span class="badge outline">Sem especiais</span>
@@ -247,7 +247,7 @@
                 <!-- POUPANÇA -->
                 <section id="tab-savings" class="tab-content">
                     <div class="layout-two">
-                        <div class="card">
+                        <div class="card glass-card">
                             <div class="card-header">
                                 <h3>Novo valor guardado</h3>
                                 <span class="badge soft">Poupança</span>
@@ -271,7 +271,7 @@
                             <button id="saveSavingBtn" class="btn btn-primary full">Registrar valor guardado</button>
                             <p id="savingMessage" class="message"></p>
                         </div>
-                        <div class="card">
+                        <div class="card list-card glass-card">
                             <div class="card-header">
                                 <h3>Valores guardados do mês filtrado</h3>
                             </div>
@@ -283,13 +283,13 @@
                 <!-- ESPECIAIS -->
                 <section id="tab-special" class="tab-content">
                     <div class="layout-two">
-                        <div class="card">
+                        <div class="card glass-card">
                             <div class="card-header">
                                 <h3>Nova conta especial</h3>
                                 <span class="badge soft">Anotação</span>
                             </div>
                             <p class="muted small">
-                                Essas contas não entram no fluxo financeiro, servem apenas como registro (mas podem ser
+                                Essas contas não entram no fluxo financeiro, servem apenas como registro (podem ser
                                 recorrentes ou parceladas).
                             </p>
                             <label class="field">
@@ -321,7 +321,7 @@
                             <button id="saveSpecialBtn" class="btn btn-primary full">Salvar conta especial</button>
                             <p id="specialMessage" class="message"></p>
                         </div>
-                        <div class="card">
+                        <div class="card list-card glass-card">
                             <div class="card-header">
                                 <h3>Contas especiais do mês filtrado</h3>
                             </div>

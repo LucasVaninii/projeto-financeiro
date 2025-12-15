@@ -8,7 +8,6 @@ const firebaseConfig = {
   appId: "1:426355365160:web:e7ca8d49d5b2929d562c1d"
 };
 
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -174,6 +173,10 @@ function nextPaymentGroup(current) {
   return 1;
 }
 
+function generateSeriesId() {
+  return db.collection("_series").doc().id;
+}
+
 // === 5. AUTENTICAÇÃO (lembrar de mim) ===
 (function initRememberMeUI() {
   const saved = localStorage.getItem("mgf-remember") === "1";
@@ -194,7 +197,6 @@ registerBtn.addEventListener("click", async () => {
   }
 
   try {
-    // Registro sempre com persistência LOCAL para conveniência
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.createUserWithEmailAndPassword(email, password);
     authMessage.textContent = "Conta criada com sucesso! Você já está logado.";
@@ -268,7 +270,6 @@ function initApp() {
   const currentMonthRef = getCurrentMonthRef();
   currentMonthLabel.textContent = `Mês atual: ${formatMonthLabel(currentMonthRef)}`;
 
-  // Preenche mês (2 anteriores, atual, 2 próximos)
   const refs = getMonthWindowRefs();
   monthFilter.innerHTML = "";
   refs.forEach((ref) => {
@@ -348,14 +349,18 @@ async function loadIncomes(monthRef, paymentGroup) {
 
     const meta = document.createElement("span");
     meta.className = "list-meta";
-    const receivedStr = inc.received ? "Recebido" : "A receber";
-    meta.textContent = `${inc.date} • ${getPaymentGroupLabel(inc.paymentGroup)} • ${receivedStr}`;
+    const statusText = inc.received ? "Recebido" : "A receber";
+    meta.textContent = `${inc.date} • ${getPaymentGroupLabel(inc.paymentGroup)} • ${statusText}`;
 
     left.appendChild(title);
     left.appendChild(meta);
 
     const right = document.createElement("div");
     right.className = "list-right";
+
+    const statusPill = document.createElement("span");
+    statusPill.className = "status-pill " + (inc.received ? "status-received" : "status-pending");
+    statusPill.textContent = inc.received ? "Recebido" : "A receber";
 
     const valueSpan = document.createElement("span");
     valueSpan.className = "list-value";
@@ -364,7 +369,6 @@ async function loadIncomes(monthRef, paymentGroup) {
     const chips = document.createElement("div");
     chips.className = "chips";
 
-    // Alternar recebido
     const toggleChip = document.createElement("button");
     toggleChip.className = "chip success";
     toggleChip.textContent = inc.received ? "Marcar a receber" : "Marcar recebido";
@@ -374,7 +378,6 @@ async function loadIncomes(monthRef, paymentGroup) {
       reloadAllData();
     });
 
-    // Mudar grupo de pagamento
     const groupChip = document.createElement("button");
     groupChip.className = "chip info";
     groupChip.textContent = "Mudar grupo";
@@ -385,7 +388,6 @@ async function loadIncomes(monthRef, paymentGroup) {
       reloadAllData();
     });
 
-    // Excluir
     const delChip = document.createElement("button");
     delChip.className = "chip danger";
     delChip.textContent = "Excluir";
@@ -400,6 +402,7 @@ async function loadIncomes(monthRef, paymentGroup) {
     chips.appendChild(groupChip);
     chips.appendChild(delChip);
 
+    right.appendChild(statusPill);
     right.appendChild(valueSpan);
     right.appendChild(chips);
 
@@ -452,6 +455,10 @@ async function loadExpenses(monthRef, paymentGroup) {
     const right = document.createElement("div");
     right.className = "list-right";
 
+    const statusPill = document.createElement("span");
+    statusPill.className = "status-pill " + (exp.paid ? "status-paid" : "status-open");
+    statusPill.textContent = exp.paid ? "Pago" : "Em aberto";
+
     const valueSpan = document.createElement("span");
     valueSpan.className = "list-value";
     valueSpan.textContent = formatCurrency(exp.amount || 0);
@@ -459,7 +466,6 @@ async function loadExpenses(monthRef, paymentGroup) {
     const chips = document.createElement("div");
     chips.className = "chips";
 
-    // Alternar pago
     const toggleChip = document.createElement("button");
     toggleChip.className = "chip success";
     toggleChip.textContent = exp.paid ? "Marcar em aberto" : "Marcar pago";
@@ -469,7 +475,6 @@ async function loadExpenses(monthRef, paymentGroup) {
       reloadAllData();
     });
 
-    // Mudar grupo de pagamento
     const groupChip = document.createElement("button");
     groupChip.className = "chip info";
     groupChip.textContent = "Mudar grupo";
@@ -480,7 +485,6 @@ async function loadExpenses(monthRef, paymentGroup) {
       reloadAllData();
     });
 
-    // Excluir (com regra de série recorrente)
     const delChip = document.createElement("button");
     delChip.className = "chip danger";
     delChip.textContent = "Excluir";
@@ -488,7 +492,6 @@ async function loadExpenses(monthRef, paymentGroup) {
       e.stopPropagation();
       const currentMonthRef = getSelectedMonthRef();
 
-      // Se tem série e está no mês de origem: apaga toda série
       if (exp.seriesId && exp.originMonthRef === currentMonthRef) {
         const all = confirm(
           "Esta despesa é recorrente/parcelada. Deseja apagar TODAS as ocorrências desta série?"
@@ -504,7 +507,6 @@ async function loadExpenses(monthRef, paymentGroup) {
         const deletions = qSeries.docs.map((doc) => doc.ref.delete());
         await Promise.all(deletions);
       } else {
-        // Apaga só esta
         if (!confirm("Excluir apenas esta despesa?")) return;
         await db.collection("expenses").doc(exp.id).delete();
       }
@@ -515,6 +517,7 @@ async function loadExpenses(monthRef, paymentGroup) {
     chips.appendChild(groupChip);
     chips.appendChild(delChip);
 
+    right.appendChild(statusPill);
     right.appendChild(valueSpan);
     right.appendChild(chips);
 
@@ -535,6 +538,39 @@ async function loadSavings(monthRef) {
   lastSavings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   savingList.innerHTML = "";
+
+  // Pequeno resumo por objetivo
+  if (lastSavings.length > 0) {
+    const summaryLi = document.createElement("li");
+    summaryLi.className = "list-item";
+
+    const left = document.createElement("div");
+    left.className = "list-left";
+
+    const title = document.createElement("span");
+    title.className = "list-title";
+    title.textContent = "Resumo por objetivo";
+
+    const meta = document.createElement("span");
+    meta.className = "list-meta";
+
+    const byGoal = {};
+    lastSavings.forEach((s) => {
+      const key = s.goal || "Sem objetivo";
+      byGoal[key] = (byGoal[key] || 0) + (s.amount || 0);
+    });
+
+    meta.textContent = Object.entries(byGoal)
+      .map(([g, v]) => `${g}: ${formatCurrency(v)}`)
+      .join(" • ");
+
+    left.appendChild(title);
+    left.appendChild(meta);
+
+    summaryLi.appendChild(left);
+    savingList.appendChild(summaryLi);
+  }
+
   lastSavings.forEach((sav) => {
     const li = document.createElement("li");
     li.className = "list-item";
@@ -664,11 +700,6 @@ function updateDashboardTotals() {
 }
 
 // === 9. CRIAÇÃO DE SÉRIES (RECORRÊNCIA / PARCELAS) ===
-function generateSeriesId() {
-  // usa um doc "fake" só para obter um id único
-  return db.collection("_series").doc().id;
-}
-
 async function createIncomeSeries(base) {
   const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
   const seriesId = months > 1 ? generateSeriesId() : null;
@@ -683,7 +714,7 @@ async function createIncomeSeries(base) {
       amount: base.amount,
       date: dateI,
       paymentGroup: base.paymentGroup,
-      received: base.received,
+      received: !!base.received,
       monthRef: monthRefI,
       seriesId,
       originMonthRef,
@@ -694,9 +725,10 @@ async function createIncomeSeries(base) {
 
 async function createExpenseSeries(base) {
   const originMonthRef = getMonthRefFromDateStr(base.dueDate);
+  const isPaid = !!base.paid;
 
-  // Parcelada: ignora meses recorrentes, uma parcela por mês
   if (base.isInstallment && base.installmentTotal > 1) {
+    // Parcelada: todas as parcelas respeitam o status "pago" inicial
     const seriesId = generateSeriesId();
     for (let i = 0; i < base.installmentTotal; i++) {
       const dateI = addMonthsToDateStr(base.dueDate, i);
@@ -712,7 +744,7 @@ async function createExpenseSeries(base) {
         installmentNumber: i + 1,
         installmentTotal: base.installmentTotal,
         isSpecial: base.isSpecial || false,
-        paid: base.paid || false,
+        paid: isPaid,
         monthRef: monthRefI,
         seriesId,
         originMonthRef,
@@ -738,7 +770,7 @@ async function createExpenseSeries(base) {
         installmentNumber: 1,
         installmentTotal: 1,
         isSpecial: base.isSpecial || false,
-        paid: base.paid || false,
+        paid: isPaid,
         monthRef: monthRefI,
         seriesId,
         originMonthRef,
