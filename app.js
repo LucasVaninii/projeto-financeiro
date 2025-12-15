@@ -1,11 +1,11 @@
 // === 1. CONFIGURAÇÃO DO FIREBASE (TROCAR PELOS SEUS DADOS) ===
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY_AQUI",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO",
-  storageBucket: "SEU_PROJETO.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID",
+  apiKey: "AIzaSyA53oL_wxFlobwWZlgEiyRt7Zr9usQByD4",
+  authDomain: "minha-gestao-financeira-d6543.firebaseapp.com",
+  projectId: "minha-gestao-financeira-d6543",
+  storageBucket: "minha-gestao-financeira-d6543.firebasestorage.app",
+  messagingSenderId: "426355365160",
+  appId: "1:426355365160:web:e7ca8d49d5b2929d562c1d"
 };
 
 // Inicializa Firebase
