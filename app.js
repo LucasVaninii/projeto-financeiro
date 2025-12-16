@@ -29,11 +29,23 @@ const monthFilter = document.getElementById("monthFilter");
 const paymentGroupFilter = document.getElementById("paymentGroupFilter");
 const filterApplyBtn = document.getElementById("filterApplyBtn");
 
-// Cards
+// Cards (dashboard filtrado)
 const cardTotalIncomes = document.getElementById("card-totalIncomes");
 const cardTotalExpenses = document.getElementById("card-totalExpenses");
 const cardBalance = document.getElementById("card-balance");
 const cardSavings = document.getElementById("card-savings");
+
+// Cards da visão geral do mês
+const overviewTotalIncomes = document.getElementById("overview-totalIncomes");
+const overviewTotalExpenses = document.getElementById("overview-totalExpenses");
+const overviewTotalSavings = document.getElementById("overview-totalSavings");
+const overviewBalance = document.getElementById("overview-balance");
+
+// Listas da visão geral do mês
+const overviewIncomeList = document.getElementById("overviewIncomeList");
+const overviewExpenseList = document.getElementById("overviewExpenseList");
+const overviewSavingList = document.getElementById("overviewSavingList");
+const overviewSpecialList = document.getElementById("overviewSpecialList");
 
 // Receitas
 const incomeDescription = document.getElementById("incomeDescription");
@@ -309,13 +321,23 @@ async function reloadAllData() {
   const monthRef = getSelectedMonthRef();
   const paymentGroup = getSelectedPaymentGroup();
 
+  const overviewActive =
+    document.getElementById("tab-overview") &&
+    document.getElementById("tab-overview").classList.contains("active");
+
   try {
-    await Promise.all([
+    const baseLoads = [
       loadIncomes(monthRef, paymentGroup),
       loadExpenses(monthRef, paymentGroup),
       loadSavings(monthRef),
       loadSpecial(monthRef),
-    ]);
+    ];
+
+    if (overviewActive) {
+      baseLoads.push(loadOverviewData(monthRef));
+    }
+
+    await Promise.all(baseLoads);
     updateDashboardTotals();
   } catch (err) {
     console.error("Erro ao carregar dados:", err);
@@ -699,7 +721,239 @@ function updateDashboardTotals() {
   cardBalance.textContent = formatCurrency(balance);
 }
 
-// === 9. CRIAÇÃO DE SÉRIES (RECORRÊNCIA / PARCELAS) ===
+// === 9. VISÃO GERAL DO MÊS (NOVA ABA) ===
+async function loadOverviewData(monthRef) {
+  if (!currentUser) return;
+
+  try {
+    const [incSnap, expFluxoSnap, specialSnap, savSnap] = await Promise.all([
+      db
+        .collection("incomes")
+        .where("userId", "==", currentUser.uid)
+        .where("monthRef", "==", monthRef)
+        .get(),
+      db
+        .collection("expenses")
+        .where("userId", "==", currentUser.uid)
+        .where("monthRef", "==", monthRef)
+        .where("isSpecial", "==", false)
+        .get(),
+      db
+        .collection("expenses")
+        .where("userId", "==", currentUser.uid)
+        .where("monthRef", "==", monthRef)
+        .where("isSpecial", "==", true)
+        .get(),
+      db
+        .collection("savings")
+        .where("userId", "==", currentUser.uid)
+        .where("monthRef", "==", monthRef)
+        .get(),
+    ]);
+
+    const incomes = incSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const expensesFluxo = expFluxoSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const specials = specialSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const savings = savSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    const totalIncomes = incomes.reduce((s, i) => s + (i.amount || 0), 0);
+    const totalExpensesFluxo = expensesFluxo.reduce((s, e) => s + (e.amount || 0), 0);
+    const totalSavings = savings.reduce((s, sv) => s + (sv.amount || 0), 0);
+
+    // Manter a mesma lógica do fluxo: contas especiais não entram na conta do saldo
+    const balance = totalIncomes - totalExpensesFluxo - totalSavings;
+
+    overviewTotalIncomes.textContent = formatCurrency(totalIncomes);
+    overviewTotalExpenses.textContent = formatCurrency(totalExpensesFluxo);
+    overviewTotalSavings.textContent = formatCurrency(totalSavings);
+    overviewBalance.textContent = formatCurrency(balance);
+
+    // Renderização das listas (somente leitura)
+    renderOverviewIncomes(incomes);
+    renderOverviewExpenses(expensesFluxo);
+    renderOverviewSavings(savings);
+    renderOverviewSpecials(specials);
+  } catch (err) {
+    console.error("Erro ao carregar visão geral do mês:", err);
+  }
+}
+
+function renderOverviewIncomes(incomes) {
+  overviewIncomeList.innerHTML = "";
+  if (incomes.length === 0) return;
+
+  incomes
+    .slice()
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+    .forEach((inc) => {
+      const li = document.createElement("li");
+      li.className = "list-item";
+
+      const left = document.createElement("div");
+      left.className = "list-left";
+
+      const title = document.createElement("span");
+      title.className = "list-title";
+      title.textContent = inc.description || "(Sem descrição)";
+
+      const meta = document.createElement("span");
+      meta.className = "list-meta";
+      const statusText = inc.received ? "Recebido" : "A receber";
+      meta.textContent = `${inc.date} • ${getPaymentGroupLabel(inc.paymentGroup)} • ${statusText}`;
+
+      left.appendChild(title);
+      left.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "list-right";
+
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "list-value";
+      valueSpan.textContent = formatCurrency(inc.amount || 0);
+
+      right.appendChild(valueSpan);
+
+      li.appendChild(left);
+      li.appendChild(right);
+
+      overviewIncomeList.appendChild(li);
+    });
+}
+
+function renderOverviewExpenses(expenses) {
+  overviewExpenseList.innerHTML = "";
+  if (expenses.length === 0) return;
+
+  expenses
+    .slice()
+    .sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""))
+    .forEach((exp) => {
+      const li = document.createElement("li");
+      li.className = "list-item";
+
+      const left = document.createElement("div");
+      left.className = "list-left";
+
+      const title = document.createElement("span");
+      title.className = "list-title";
+      title.textContent = exp.description || "(Sem descrição)";
+
+      const meta = document.createElement("span");
+      meta.className = "list-meta";
+      const typeStr = exp.type || "-";
+      let extra = `Tipo: ${typeStr} • ${getPaymentGroupLabel(exp.paymentGroup)}`;
+      if (exp.isInstallment) {
+        extra += ` • Parcela ${exp.installmentNumber}/${exp.installmentTotal}`;
+      }
+      const paidStr = exp.paid ? "Pago" : "Em aberto";
+      meta.textContent = `${exp.dueDate} • ${extra} • ${paidStr}`;
+
+      left.appendChild(title);
+      left.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "list-right";
+
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "list-value";
+      valueSpan.textContent = formatCurrency(exp.amount || 0);
+
+      right.appendChild(valueSpan);
+
+      li.appendChild(left);
+      li.appendChild(right);
+
+      overviewExpenseList.appendChild(li);
+    });
+}
+
+function renderOverviewSavings(savings) {
+  overviewSavingList.innerHTML = "";
+  if (savings.length === 0) return;
+
+  savings
+    .slice()
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+    .forEach((sav) => {
+      const li = document.createElement("li");
+      li.className = "list-item";
+
+      const left = document.createElement("div");
+      left.className = "list-left";
+
+      const title = document.createElement("span");
+      title.className = "list-title";
+      title.textContent = sav.goal || "Sem objetivo";
+
+      const meta = document.createElement("span");
+      meta.className = "list-meta";
+      meta.textContent = `${sav.date} • ${sav.note || ""}`;
+
+      left.appendChild(title);
+      left.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "list-right";
+
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "list-value";
+      valueSpan.textContent = formatCurrency(sav.amount || 0);
+
+      right.appendChild(valueSpan);
+
+      li.appendChild(left);
+      li.appendChild(right);
+
+      overviewSavingList.appendChild(li);
+    });
+}
+
+function renderOverviewSpecials(specials) {
+  overviewSpecialList.innerHTML = "";
+  if (specials.length === 0) return;
+
+  specials
+    .slice()
+    .sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""))
+    .forEach((sp) => {
+      const li = document.createElement("li");
+      li.className = "list-item";
+
+      const left = document.createElement("div");
+      left.className = "list-left";
+
+      const title = document.createElement("span");
+      title.className = "list-title";
+      title.textContent = sp.description || "(Sem descrição)";
+
+      const meta = document.createElement("span");
+      meta.className = "list-meta";
+      let extra = "Conta especial";
+      if (sp.isInstallment) {
+        extra += ` • Parcela ${sp.installmentNumber}/${sp.installmentTotal}`;
+      }
+      meta.textContent = `${sp.dueDate} • ${extra}`;
+
+      left.appendChild(title);
+      left.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "list-right";
+
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "list-value";
+      valueSpan.textContent = formatCurrency(sp.amount || 0);
+
+      right.appendChild(valueSpan);
+
+      li.appendChild(left);
+      li.appendChild(right);
+
+      overviewSpecialList.appendChild(li);
+    });
+}
+
+// === 10. CRIAÇÃO DE SÉRIES (RECORRÊNCIA / PARCELAS) ===
 async function createIncomeSeries(base) {
   const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
   const seriesId = months > 1 ? generateSeriesId() : null;
@@ -780,7 +1034,7 @@ async function createExpenseSeries(base) {
   }
 }
 
-// === 10. SALVAR REGISTROS ===
+// === 11. SALVAR REGISTROS ===
 saveIncomeBtn.addEventListener("click", async () => {
   if (!currentUser) return;
   incomeMessage.textContent = "";
@@ -978,18 +1232,27 @@ saveSpecialBtn.addEventListener("click", async () => {
   }
 });
 
-// === 11. ABAS ===
+// === 12. ABAS ===
 function setupTabs() {
   const tabs = document.querySelectorAll(".tab");
   const contents = document.querySelectorAll(".tab-content");
 
   tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
+    tab.addEventListener("click", async () => {
       const targetId = tab.getAttribute("data-tab");
       tabs.forEach((t) => t.classList.remove("active"));
       contents.forEach((c) => c.classList.remove("active"));
       tab.classList.add("active");
-      document.getElementById(targetId).classList.add("active");
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        targetEl.classList.add("active");
+      }
+
+      // Quando entrar na aba de visão geral do mês, atualiza os dados completos
+      if (targetId === "tab-overview") {
+        const monthRef = getSelectedMonthRef();
+        await loadOverviewData(monthRef);
+      }
     });
   });
 }

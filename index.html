@@ -63,17 +63,17 @@
 
             <!-- APP LOGADO -->
             <section id="app-section" style="display:none;">
-                <!-- DASHBOARD -->
+                <!-- DASHBOARD PRINCIPAL (FILTRADO) -->
                 <section class="card glass-card">
                     <div class="card-header">
                         <div>
-                            <h2>Visão geral</h2>
+                            <h2>Visão geral filtrada</h2>
                             <p class="muted small">
                                 Selecione o mês (2 anteriores, atual e 2 próximos) e o grupo de pagamento. Clique em
                                 “Aplicar filtros”.
                             </p>
                         </div>
-                        <span class="badge pill">Resumo</span>
+                        <span class="badge pill">Resumo filtrado</span>
                     </div>
 
                     <div class="filters">
@@ -97,19 +97,19 @@
 
                     <div class="cards-grid">
                         <div class="mini-card income-card">
-                            <span class="mini-label">Receitas no mês</span>
+                            <span class="mini-label">Receitas (filtro atual)</span>
                             <span id="card-totalIncomes" class="mini-value">R$ 0,00</span>
                         </div>
                         <div class="mini-card expense-card">
-                            <span class="mini-label">Despesas (fluxo)</span>
+                            <span class="mini-label">Despesas (fluxo, filtro atual)</span>
                             <span id="card-totalExpenses" class="mini-value">R$ 0,00</span>
                         </div>
                         <div class="mini-card balance-card">
-                            <span class="mini-label">Saldo previsto</span>
+                            <span class="mini-label">Saldo previsto (filtro atual)</span>
                             <span id="card-balance" class="mini-value highlight">R$ 0,00</span>
                         </div>
                         <div class="mini-card saving-card">
-                            <span class="mini-label">Guardado no mês</span>
+                            <span class="mini-label">Guardado no mês (filtro atual)</span>
                             <span id="card-savings" class="mini-value">R$ 0,00</span>
                         </div>
                     </div>
@@ -117,14 +117,83 @@
 
                 <!-- ABAS -->
                 <nav class="tabs">
-                    <button class="tab active" data-tab="tab-incomes">Receitas</button>
+                    <button class="tab active" data-tab="tab-overview">Visão geral do mês</button>
+                    <button class="tab" data-tab="tab-incomes">Receitas</button>
                     <button class="tab" data-tab="tab-expenses">Despesas</button>
                     <button class="tab" data-tab="tab-savings">Valores guardados</button>
                     <button class="tab" data-tab="tab-special">Contas especiais</button>
                 </nav>
 
+                <!-- VISÃO GERAL DO MÊS -->
+                <section id="tab-overview" class="tab-content active">
+                    <section class="card glass-card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Resumo do mês selecionado</h3>
+                                <p class="muted small">
+                                    Esta visão sempre considera <strong>todos os grupos de pagamento</strong> para o mês
+                                    escolhido, independente do filtro de grupo acima.
+                                </p>
+                            </div>
+                            <span class="badge soft">Mês completo</span>
+                        </div>
+                        <div class="cards-grid cards-grid-overview">
+                            <div class="mini-card income-card">
+                                <span class="mini-label">Receitas no mês</span>
+                                <span id="overview-totalIncomes" class="mini-value">R$ 0,00</span>
+                            </div>
+                            <div class="mini-card expense-card">
+                                <span class="mini-label">Despesas (fluxo)</span>
+                                <span id="overview-totalExpenses" class="mini-value">R$ 0,00</span>
+                            </div>
+                            <div class="mini-card saving-card">
+                                <span class="mini-label">Valores guardados</span>
+                                <span id="overview-totalSavings" class="mini-value">R$ 0,00</span>
+                            </div>
+                            <div class="mini-card balance-card">
+                                <span class="mini-label">Saldo previsto do mês</span>
+                                <span id="overview-balance" class="mini-value highlight">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="layout-overview">
+                        <div class="card list-card glass-card">
+                            <div class="card-header">
+                                <h3>Receitas do mês</h3>
+                                <span class="badge outline">Leitura</span>
+                            </div>
+                            <ul id="overviewIncomeList" class="list"></ul>
+                        </div>
+
+                        <div class="card list-card glass-card">
+                            <div class="card-header">
+                                <h3>Despesas do mês (fluxo)</h3>
+                                <span class="badge outline">Leitura</span>
+                            </div>
+                            <ul id="overviewExpenseList" class="list"></ul>
+                        </div>
+
+                        <div class="card list-card glass-card">
+                            <div class="card-header">
+                                <h3>Valores guardados no mês</h3>
+                                <span class="badge outline">Leitura</span>
+                            </div>
+                            <ul id="overviewSavingList" class="list"></ul>
+                        </div>
+
+                        <div class="card list-card glass-card">
+                            <div class="card-header">
+                                <h3>Contas especiais do mês</h3>
+                                <span class="badge outline">Leitura</span>
+                            </div>
+                            <ul id="overviewSpecialList" class="list"></ul>
+                        </div>
+                    </section>
+                </section>
+
                 <!-- RECEITAS -->
-                <section id="tab-incomes" class="tab-content active">
+                <section id="tab-incomes" class="tab-content">
                     <div class="layout-two">
                         <div class="card glass-card">
                             <div class="card-header">
