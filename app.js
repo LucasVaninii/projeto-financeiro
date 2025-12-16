@@ -35,13 +35,13 @@ const cardTotalExpenses = document.getElementById("card-totalExpenses");
 const cardBalance = document.getElementById("card-balance");
 const cardSavings = document.getElementById("card-savings");
 
-// Cards da visão geral do mês
+// Cards da visão geral do mês (Dashboard)
 const overviewTotalIncomes = document.getElementById("overview-totalIncomes");
 const overviewTotalExpenses = document.getElementById("overview-totalExpenses");
 const overviewTotalSavings = document.getElementById("overview-totalSavings");
 const overviewBalance = document.getElementById("overview-balance");
 
-// Listas da visão geral do mês
+// Listas da visão geral do mês (Dashboard)
 const overviewIncomeList = document.getElementById("overviewIncomeList");
 const overviewExpenseList = document.getElementById("overviewExpenseList");
 const overviewSavingList = document.getElementById("overviewSavingList");
@@ -252,7 +252,8 @@ logoutBtn.addEventListener("click", async () => {
 
 // === 6. ESTADO GLOBAL ===
 let currentUser = null;
-let tabsInitialized = false;
+let navInitialized = false;
+let currentView = "home";
 
 let lastIncomes = [];
 let lastExpenses = [];
@@ -294,12 +295,19 @@ function initApp() {
 
   filterApplyBtn.addEventListener("click", () => {
     reloadAllData();
+    if (currentView === "dashboard") {
+      const monthRef = getSelectedMonthRef();
+      loadOverviewData(monthRef);
+    }
   });
 
-  if (!tabsInitialized) {
-    setupTabs();
-    tabsInitialized = true;
+  if (!navInitialized) {
+    setupSideNav();
+    navInitialized = true;
   }
+
+  currentView = "home";
+  showView("home");
 
   reloadAllData();
 }
@@ -315,15 +323,63 @@ function getSelectedPaymentGroup() {
   return isNaN(parsed) ? null : parsed;
 }
 
-// === 8. CARREGAR DADOS ===
+// === 8. NAVEGAÇÃO LATERAL ===
+function setupSideNav() {
+  const links = document.querySelectorAll(".side-nav-link");
+  const views = document.querySelectorAll(".view");
+
+  function setActiveView(target) {
+    currentView = target;
+    links.forEach((l) => l.classList.remove("active"));
+    views.forEach((v) => v.classList.remove("active"));
+    const activeLink = Array.from(links).find(
+      (l) => l.getAttribute("data-view-target") === target
+    );
+    if (activeLink) activeLink.classList.add("active");
+    const activeView = document.getElementById(`view-${target}`);
+    if (activeView) activeView.classList.add("active");
+  }
+
+  links.forEach((link) => {
+    link.addEventListener("click", async () => {
+      const target = link.getAttribute("data-view-target");
+      setActiveView(target);
+
+      if (target === "dashboard") {
+        const monthRef = getSelectedMonthRef();
+        await loadOverviewData(monthRef);
+      }
+    });
+  });
+}
+
+function showView(name) {
+  const links = document.querySelectorAll(".side-nav-link");
+  const views = document.querySelectorAll(".view");
+  currentView = name;
+
+  links.forEach((l) => {
+    if (l.getAttribute("data-view-target") === name) {
+      l.classList.add("active");
+    } else {
+      l.classList.remove("active");
+    }
+  });
+
+  views.forEach((v) => {
+    if (v.id === `view-${name}`) {
+      v.classList.add("active");
+    } else {
+      v.classList.remove("active");
+    }
+  });
+}
+
+// === 9. CARREGAR DADOS ===
 async function reloadAllData() {
   if (!currentUser) return;
   const monthRef = getSelectedMonthRef();
   const paymentGroup = getSelectedPaymentGroup();
-
-  const overviewActive =
-    document.getElementById("tab-overview") &&
-    document.getElementById("tab-overview").classList.contains("active");
 
   try {
     const baseLoads = [
@@ -333,7 +389,7 @@ async function reloadAllData() {
       loadSpecial(monthRef),
     ];
 
-    if (overviewActive) {
+    if (currentView === "dashboard") {
       baseLoads.push(loadOverviewData(monthRef));
     }
 
@@ -721,7 +777,7 @@ function updateDashboardTotals() {
   cardBalance.textContent = formatCurrency(balance);
 }
 
-// === 9. VISÃO GERAL DO MÊS (NOVA ABA) ===
+// === 10. VISÃO GERAL DO MÊS (DASHBOARD) ===
 async function loadOverviewData(monthRef) {
   if (!currentUser) return;
 
@@ -760,7 +816,6 @@ async function loadOverviewData(monthRef) {
     const totalExpensesFluxo = expensesFluxo.reduce((s, e) => s + (e.amount || 0), 0);
     const totalSavings = savings.reduce((s, sv) => s + (sv.amount || 0), 0);
 
-    // Manter a mesma lógica do fluxo: contas especiais não entram na conta do saldo
     const balance = totalIncomes - totalExpensesFluxo - totalSavings;
 
     overviewTotalIncomes.textContent = formatCurrency(totalIncomes);
@@ -768,7 +823,6 @@ async function loadOverviewData(monthRef) {
     overviewTotalSavings.textContent = formatCurrency(totalSavings);
     overviewBalance.textContent = formatCurrency(balance);
 
-    // Renderização das listas (somente leitura)
     renderOverviewIncomes(incomes);
     renderOverviewExpenses(expensesFluxo);
     renderOverviewSavings(savings);
@@ -953,7 +1007,7 @@ function renderOverviewSpecials(specials) {
     });
 }
 
-// === 10. CRIAÇÃO DE SÉRIES (RECORRÊNCIA / PARCELAS) ===
+// === 11. CRIAÇÃO DE SÉRIES (RECORRÊNCIA / PARCELAS) ===
 async function createIncomeSeries(base) {
   const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
   const seriesId = months > 1 ? generateSeriesId() : null;
@@ -982,7 +1036,7 @@ async function createExpenseSeries(base) {
   const isPaid = !!base.paid;
 
   if (base.isInstallment && base.installmentTotal > 1) {
-    // Parcelada: todas as parcelas respeitam o status "pago" inicial
+    // Parcelada
     const seriesId = generateSeriesId();
     for (let i = 0; i < base.installmentTotal; i++) {
       const dateI = addMonthsToDateStr(base.dueDate, i);
@@ -1006,7 +1060,7 @@ async function createExpenseSeries(base) {
       });
     }
   } else {
-    // Recorrente simples (sem parcelas)
+    // Recorrente simples
     const months = Math.max(1, parseInt(base.recurrentMonths || "1", 10));
     const seriesId = months > 1 ? generateSeriesId() : null;
 
@@ -1034,7 +1088,7 @@ async function createExpenseSeries(base) {
   }
 }
 
-// === 11. SALVAR REGISTROS ===
+// === 12. SALVAR REGISTROS ===
 saveIncomeBtn.addEventListener("click", async () => {
   if (!currentUser) return;
   incomeMessage.textContent = "";
@@ -1072,6 +1126,10 @@ saveIncomeBtn.addEventListener("click", async () => {
     incomeReceived.checked = false;
 
     await reloadAllData();
+    if (currentView === "dashboard") {
+      const monthRef = getSelectedMonthRef();
+      await loadOverviewData(monthRef);
+    }
   } catch (err) {
     console.error(err);
     incomeMessage.textContent = "Erro ao salvar receita: " + err.message;
@@ -1130,6 +1188,10 @@ saveExpenseBtn.addEventListener("click", async () => {
     expensePaid.checked = false;
 
     await reloadAllData();
+    if (currentView === "dashboard") {
+      const monthRef = getSelectedMonthRef();
+      await loadOverviewData(monthRef);
+    }
   } catch (err) {
     console.error(err);
     expenseMessage.textContent = "Erro ao salvar despesa: " + err.message;
@@ -1173,6 +1235,10 @@ saveSavingBtn.addEventListener("click", async () => {
     savingNote.value = "";
 
     await reloadAllData();
+    if (currentView === "dashboard") {
+      const monthRefSel = getSelectedMonthRef();
+      await loadOverviewData(monthRefSel);
+    }
   } catch (err) {
     console.error(err);
     savingMessage.textContent = "Erro ao salvar: " + err.message;
@@ -1225,34 +1291,13 @@ saveSpecialBtn.addEventListener("click", async () => {
     specialInstallmentTotal.value = "";
 
     await reloadAllData();
+    if (currentView === "dashboard") {
+      const monthRefSel = getSelectedMonthRef();
+      await loadOverviewData(monthRefSel);
+    }
   } catch (err) {
     console.error(err);
     specialMessage.textContent = "Erro ao salvar: " + err.message;
     specialMessage.classList.add("error");
   }
 });
-
-// === 12. ABAS ===
-function setupTabs() {
-  const tabs = document.querySelectorAll(".tab");
-  const contents = document.querySelectorAll(".tab-content");
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", async () => {
-      const targetId = tab.getAttribute("data-tab");
-      tabs.forEach((t) => t.classList.remove("active"));
-      contents.forEach((c) => c.classList.remove("active"));
-      tab.classList.add("active");
-      const targetEl = document.getElementById(targetId);
-      if (targetEl) {
-        targetEl.classList.add("active");
-      }
-
-      // Quando entrar na aba de visão geral do mês, atualiza os dados completos
-      if (targetId === "tab-overview") {
-        const monthRef = getSelectedMonthRef();
-        await loadOverviewData(monthRef);
-      }
-    });
-  });
-}

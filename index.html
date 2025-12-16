@@ -63,341 +63,404 @@
 
             <!-- APP LOGADO -->
             <section id="app-section" style="display:none;">
-                <!-- DASHBOARD PRINCIPAL (FILTRADO) -->
-                <section class="card glass-card">
-                    <div class="card-header">
-                        <div>
-                            <h2>Visão geral filtrada</h2>
+                <div class="app-layout">
+                    <!-- MENU LATERAL -->
+                    <aside class="sidebar">
+                        <div class="sidebar-header">
+                            <span class="sidebar-title">Menu</span>
+                            <span class="sidebar-subtitle">Navegação</span>
+                        </div>
+                        <nav class="side-nav">
+                            <button class="side-nav-link active" data-view-target="home">
+                                <span>Início</span>
+                            </button>
+                            <button class="side-nav-link" data-view-target="dashboard">
+                                <span>Dashboard</span>
+                            </button>
+                            <button class="side-nav-link" data-view-target="incomes">
+                                <span>Receitas</span>
+                            </button>
+                            <button class="side-nav-link" data-view-target="expenses">
+                                <span>Despesas</span>
+                            </button>
+                            <button class="side-nav-link" data-view-target="savings">
+                                <span>Valores guardados</span>
+                            </button>
+                            <button class="side-nav-link" data-view-target="special">
+                                <span>Contas especiais</span>
+                            </button>
+                        </nav>
+                        <div class="sidebar-footer">
                             <p class="muted small">
-                                Selecione o mês (2 anteriores, atual e 2 próximos) e o grupo de pagamento. Clique em
-                                “Aplicar filtros”.
+                                Use o menu para registrar e acompanhar suas finanças.
                             </p>
                         </div>
-                        <span class="badge pill">Resumo filtrado</span>
-                    </div>
+                    </aside>
 
-                    <div class="filters">
-                        <label>
-                            Mês:
-                            <select id="monthFilter"></select>
-                        </label>
-                        <label>
-                            Grupo de pagamento:
-                            <select id="paymentGroupFilter">
-                                <option value="all">Todos</option>
-                                <option value="1">Pagamentos dia 5</option>
-                                <option value="2">Pagamentos dia 10</option>
-                                <option value="3">Pagamentos dia 20</option>
-                            </select>
-                        </label>
-                        <button id="filterApplyBtn" class="btn btn-primary small-btn" type="button">
-                            Aplicar filtros
-                        </button>
-                    </div>
+                    <!-- ÁREA DE CONTEÚDO -->
+                    <section class="content-area">
+                        <!-- PÁGINA INICIAL -->
+                        <section id="view-home" class="view active">
+                            <section class="card glass-card">
+                                <div class="card-header">
+                                    <div>
+                                        <h2>Bem-vindo à sua gestão</h2>
+                                        <p class="muted small">
+                                            Esta é a sua página inicial. Use o menu ao lado para acessar o dashboard,
+                                            lançar receitas, despesas, valores guardados e contas especiais.
+                                        </p>
+                                    </div>
+                                    <span class="badge soft">Início</span>
+                                </div>
+                                <div class="home-grid">
+                                    <div class="mini-card income-card">
+                                        <span class="mini-label">Como usar</span>
+                                        <span class="home-text">
+                                            1. Vá em <strong>Receitas</strong> e cadastre suas entradas.<br>
+                                            2. Vá em <strong>Despesas</strong> e registre seus compromissos.<br>
+                                            3. Use <strong>Valores guardados</strong> para acompanhar sua reserva.<br>
+                                            4. Consulte o <strong>Dashboard</strong> para ver o resumo do mês.
+                                        </span>
+                                    </div>
+                                    <div class="mini-card balance-card">
+                                        <span class="mini-label">Dica rápida</span>
+                                        <span class="home-text">
+                                            Mantenha seus lançamentos atualizados para que o saldo previsto e o
+                                            acompanhamento mensal reflitam sua realidade financeira.
+                                        </span>
+                                    </div>
+                                </div>
+                            </section>
+                        </section>
 
-                    <div class="cards-grid">
-                        <div class="mini-card income-card">
-                            <span class="mini-label">Receitas (filtro atual)</span>
-                            <span id="card-totalIncomes" class="mini-value">R$ 0,00</span>
-                        </div>
-                        <div class="mini-card expense-card">
-                            <span class="mini-label">Despesas (fluxo, filtro atual)</span>
-                            <span id="card-totalExpenses" class="mini-value">R$ 0,00</span>
-                        </div>
-                        <div class="mini-card balance-card">
-                            <span class="mini-label">Saldo previsto (filtro atual)</span>
-                            <span id="card-balance" class="mini-value highlight">R$ 0,00</span>
-                        </div>
-                        <div class="mini-card saving-card">
-                            <span class="mini-label">Guardado no mês (filtro atual)</span>
-                            <span id="card-savings" class="mini-value">R$ 0,00</span>
-                        </div>
-                    </div>
-                </section>
+                        <!-- DASHBOARD (VISÃO GERAL + FILTRO) -->
+                        <section id="view-dashboard" class="view">
+                            <section class="card glass-card">
+                                <div class="card-header">
+                                    <div>
+                                        <h2>Dashboard</h2>
+                                        <p class="muted small">
+                                            Selecione o mês (2 anteriores, atual e 2 próximos) e o grupo de pagamento.
+                                            Clique em “Aplicar filtros” para atualizar o resumo e as listas.
+                                        </p>
+                                    </div>
+                                    <span class="badge pill">Visão geral</span>
+                                </div>
 
-                <!-- ABAS -->
-                <nav class="tabs">
-                    <button class="tab active" data-tab="tab-overview">Visão geral do mês</button>
-                    <button class="tab" data-tab="tab-incomes">Receitas</button>
-                    <button class="tab" data-tab="tab-expenses">Despesas</button>
-                    <button class="tab" data-tab="tab-savings">Valores guardados</button>
-                    <button class="tab" data-tab="tab-special">Contas especiais</button>
-                </nav>
+                                <div class="filters">
+                                    <label>
+                                        Mês:
+                                        <select id="monthFilter"></select>
+                                    </label>
+                                    <label>
+                                        Grupo de pagamento:
+                                        <select id="paymentGroupFilter">
+                                            <option value="all">Todos</option>
+                                            <option value="1">Pagamentos dia 5</option>
+                                            <option value="2">Pagamentos dia 10</option>
+                                            <option value="3">Pagamentos dia 20</option>
+                                        </select>
+                                    </label>
+                                    <button id="filterApplyBtn" class="btn btn-primary small-btn" type="button">
+                                        Aplicar filtros
+                                    </button>
+                                </div>
 
-                <!-- VISÃO GERAL DO MÊS -->
-                <section id="tab-overview" class="tab-content active">
-                    <section class="card glass-card">
-                        <div class="card-header">
-                            <div>
-                                <h3>Resumo do mês selecionado</h3>
-                                <p class="muted small">
-                                    Esta visão sempre considera <strong>todos os grupos de pagamento</strong> para o mês
-                                    escolhido, independente do filtro de grupo acima.
-                                </p>
+                                <div class="cards-grid">
+                                    <div class="mini-card income-card">
+                                        <span class="mini-label">Receitas (filtro atual)</span>
+                                        <span id="card-totalIncomes" class="mini-value">R$ 0,00</span>
+                                    </div>
+                                    <div class="mini-card expense-card">
+                                        <span class="mini-label">Despesas (fluxo, filtro atual)</span>
+                                        <span id="card-totalExpenses" class="mini-value">R$ 0,00</span>
+                                    </div>
+                                    <div class="mini-card balance-card">
+                                        <span class="mini-label">Saldo previsto (filtro atual)</span>
+                                        <span id="card-balance" class="mini-value highlight">R$ 0,00</span>
+                                    </div>
+                                    <div class="mini-card saving-card">
+                                        <span class="mini-label">Guardado no mês (filtro atual)</span>
+                                        <span id="card-savings" class="mini-value">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="card glass-card">
+                                <div class="card-header">
+                                    <div>
+                                        <h3>Resumo completo do mês</h3>
+                                        <p class="muted small">
+                                            Esta visão considera <strong>todos os grupos de pagamento</strong> para o
+                                            mês selecionado acima.
+                                        </p>
+                                    </div>
+                                    <span class="badge soft">Mês completo</span>
+                                </div>
+                                <div class="cards-grid cards-grid-overview">
+                                    <div class="mini-card income-card">
+                                        <span class="mini-label">Receitas no mês</span>
+                                        <span id="overview-totalIncomes" class="mini-value">R$ 0,00</span>
+                                    </div>
+                                    <div class="mini-card expense-card">
+                                        <span class="mini-label">Despesas (fluxo)</span>
+                                        <span id="overview-totalExpenses" class="mini-value">R$ 0,00</span>
+                                    </div>
+                                    <div class="mini-card saving-card">
+                                        <span class="mini-label">Valores guardados</span>
+                                        <span id="overview-totalSavings" class="mini-value">R$ 0,00</span>
+                                    </div>
+                                    <div class="mini-card balance-card">
+                                        <span class="mini-label">Saldo previsto do mês</span>
+                                        <span id="overview-balance" class="mini-value highlight">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="layout-overview">
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Receitas do mês</h3>
+                                        <span class="badge outline">Leitura</span>
+                                    </div>
+                                    <ul id="overviewIncomeList" class="list"></ul>
+                                </div>
+
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Despesas do mês (fluxo)</h3>
+                                        <span class="badge outline">Leitura</span>
+                                    </div>
+                                    <ul id="overviewExpenseList" class="list"></ul>
+                                </div>
+
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Valores guardados no mês</h3>
+                                        <span class="badge outline">Leitura</span>
+                                    </div>
+                                    <ul id="overviewSavingList" class="list"></ul>
+                                </div>
+
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Contas especiais do mês</h3>
+                                        <span class="badge outline">Leitura</span>
+                                    </div>
+                                    <ul id="overviewSpecialList" class="list"></ul>
+                                </div>
+                            </section>
+                        </section>
+
+                        <!-- RECEITAS -->
+                        <section id="view-incomes" class="view">
+                            <div class="layout-two">
+                                <div class="card glass-card">
+                                    <div class="card-header">
+                                        <h3>Nova receita</h3>
+                                        <span class="badge soft">Entrada</span>
+                                    </div>
+                                    <label class="field">
+                                        <span>Descrição</span>
+                                        <input id="incomeDescription" placeholder="Salário, freelancer, etc." />
+                                    </label>
+                                    <label class="field">
+                                        <span>Valor (R$)</span>
+                                        <input id="incomeAmount" type="number" step="0.01" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Data</span>
+                                        <input id="incomeDate" type="date" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Grupo de pagamento</span>
+                                        <select id="incomePaymentGroup">
+                                            <option value="1">Pagamentos dia 5</option>
+                                            <option value="2">Pagamentos dia 10</option>
+                                            <option value="3">Pagamentos dia 20</option>
+                                        </select>
+                                    </label>
+                                    <label class="field">
+                                        <span>Meses recorrentes (incluindo este)</span>
+                                        <input id="incomeRecurrentMonths" type="number" min="1" value="1" />
+                                    </label>
+                                    <label class="field checkbox">
+                                        <input id="incomeReceived" type="checkbox" />
+                                        <span>Já recebido</span>
+                                    </label>
+                                    <button id="saveIncomeBtn" class="btn btn-primary full">Salvar receita</button>
+                                    <p id="incomeMessage" class="message"></p>
+                                </div>
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Receitas do mês (filtro atual)</h3>
+                                    </div>
+                                    <ul id="incomeList" class="list"></ul>
+                                </div>
                             </div>
-                            <span class="badge soft">Mês completo</span>
-                        </div>
-                        <div class="cards-grid cards-grid-overview">
-                            <div class="mini-card income-card">
-                                <span class="mini-label">Receitas no mês</span>
-                                <span id="overview-totalIncomes" class="mini-value">R$ 0,00</span>
+                        </section>
+
+                        <!-- DESPESAS -->
+                        <section id="view-expenses" class="view">
+                            <div class="layout-two">
+                                <div class="card glass-card">
+                                    <div class="card-header">
+                                        <h3>Nova despesa</h3>
+                                        <span class="badge soft danger">Saída</span>
+                                    </div>
+                                    <label class="field">
+                                        <span>Descrição</span>
+                                        <input id="expenseDescription" placeholder="Aluguel, internet, etc." />
+                                    </label>
+                                    <label class="field">
+                                        <span>Valor (R$)</span>
+                                        <input id="expenseAmount" type="number" step="0.01" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Data de vencimento</span>
+                                        <input id="expenseDueDate" type="date" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Tipo</span>
+                                        <select id="expenseType">
+                                            <option value="fixa">Fixa</option>
+                                            <option value="recorrente">Recorrente</option>
+                                            <option value="variavel">Variável</option>
+                                        </select>
+                                    </label>
+                                    <label class="field">
+                                        <span>Grupo de pagamento</span>
+                                        <select id="expensePaymentGroup">
+                                            <option value="1">Pagamentos dia 5</option>
+                                            <option value="2">Pagamentos dia 10</option>
+                                            <option value="3">Pagamentos dia 20</option>
+                                        </select>
+                                    </label>
+                                    <label class="field">
+                                        <span>Meses recorrentes (incluindo este)</span>
+                                        <input id="expenseRecurrentMonths" type="number" min="1" value="1" />
+                                    </label>
+                                    <div class="field-inline">
+                                        <label class="field checkbox">
+                                            <input id="expenseInstallment" type="checkbox" />
+                                            <span>Parcelada</span>
+                                        </label>
+                                        <input id="expenseInstallmentCurrent" type="number" min="1"
+                                            placeholder="Parcela atual" />
+                                        <input id="expenseInstallmentTotal" type="number" min="1"
+                                            placeholder="Total de parcelas" />
+                                    </div>
+                                    <label class="field checkbox">
+                                        <input id="expensePaid" type="checkbox" />
+                                        <span>Já pago</span>
+                                    </label>
+                                    <p class="muted small">
+                                        Dica: use <strong>parcelas</strong> ou <strong>meses recorrentes</strong>. Se
+                                        marcar parcelada, os meses recorrentes serão ignorados.
+                                    </p>
+                                    <button id="saveExpenseBtn" class="btn btn-primary full">Salvar despesa</button>
+                                    <p id="expenseMessage" class="message"></p>
+                                </div>
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Despesas do mês (fluxo, filtro atual)</h3>
+                                        <span class="badge outline">Sem especiais</span>
+                                    </div>
+                                    <p class="muted small">Contas especiais aparecem em uma opção separada.</p>
+                                    <ul id="expenseList" class="list"></ul>
+                                </div>
                             </div>
-                            <div class="mini-card expense-card">
-                                <span class="mini-label">Despesas (fluxo)</span>
-                                <span id="overview-totalExpenses" class="mini-value">R$ 0,00</span>
+                        </section>
+
+                        <!-- POUPANÇA -->
+                        <section id="view-savings" class="view">
+                            <div class="layout-two">
+                                <div class="card glass-card">
+                                    <div class="card-header">
+                                        <h3>Novo valor guardado</h3>
+                                        <span class="badge soft">Poupança</span>
+                                    </div>
+                                    <label class="field">
+                                        <span>Valor (R$)</span>
+                                        <input id="savingAmount" type="number" step="0.01" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Data</span>
+                                        <input id="savingDate" type="date" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Destino / objetivo</span>
+                                        <input id="savingGoal" placeholder="Reserva, viagem, etc." />
+                                    </label>
+                                    <label class="field">
+                                        <span>Observações</span>
+                                        <textarea id="savingNote" rows="3"></textarea>
+                                    </label>
+                                    <button id="saveSavingBtn" class="btn btn-primary full">Registrar valor
+                                        guardado</button>
+                                    <p id="savingMessage" class="message"></p>
+                                </div>
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Valores guardados do mês (filtro atual)</h3>
+                                    </div>
+                                    <ul id="savingList" class="list"></ul>
+                                </div>
                             </div>
-                            <div class="mini-card saving-card">
-                                <span class="mini-label">Valores guardados</span>
-                                <span id="overview-totalSavings" class="mini-value">R$ 0,00</span>
+                        </section>
+
+                        <!-- ESPECIAIS -->
+                        <section id="view-special" class="view">
+                            <div class="layout-two">
+                                <div class="card glass-card">
+                                    <div class="card-header">
+                                        <h3>Nova conta especial</h3>
+                                        <span class="badge soft">Anotação</span>
+                                    </div>
+                                    <p class="muted small">
+                                        Essas contas não entram no fluxo financeiro, servem apenas como registro (podem
+                                        ser recorrentes ou parceladas).
+                                    </p>
+                                    <label class="field">
+                                        <span>Descrição</span>
+                                        <input id="specialDescription" placeholder="Observação especial" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Valor (R$)</span>
+                                        <input id="specialAmount" type="number" step="0.01" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Data</span>
+                                        <input id="specialDate" type="date" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Meses recorrentes (incluindo este)</span>
+                                        <input id="specialRecurrentMonths" type="number" min="1" value="1" />
+                                    </label>
+                                    <div class="field-inline">
+                                        <label class="field checkbox">
+                                            <input id="specialInstallment" type="checkbox" />
+                                            <span>Parcelada</span>
+                                        </label>
+                                        <input id="specialInstallmentCurrent" type="number" min="1"
+                                            placeholder="Parcela atual" />
+                                        <input id="specialInstallmentTotal" type="number" min="1"
+                                            placeholder="Total de parcelas" />
+                                    </div>
+                                    <button id="saveSpecialBtn" class="btn btn-primary full">Salvar conta
+                                        especial</button>
+                                    <p id="specialMessage" class="message"></p>
+                                </div>
+                                <div class="card list-card glass-card">
+                                    <div class="card-header">
+                                        <h3>Contas especiais do mês (filtro atual)</h3>
+                                    </div>
+                                    <ul id="specialList" class="list"></ul>
+                                </div>
                             </div>
-                            <div class="mini-card balance-card">
-                                <span class="mini-label">Saldo previsto do mês</span>
-                                <span id="overview-balance" class="mini-value highlight">R$ 0,00</span>
-                            </div>
-                        </div>
+                        </section>
                     </section>
-
-                    <section class="layout-overview">
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Receitas do mês</h3>
-                                <span class="badge outline">Leitura</span>
-                            </div>
-                            <ul id="overviewIncomeList" class="list"></ul>
-                        </div>
-
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Despesas do mês (fluxo)</h3>
-                                <span class="badge outline">Leitura</span>
-                            </div>
-                            <ul id="overviewExpenseList" class="list"></ul>
-                        </div>
-
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Valores guardados no mês</h3>
-                                <span class="badge outline">Leitura</span>
-                            </div>
-                            <ul id="overviewSavingList" class="list"></ul>
-                        </div>
-
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Contas especiais do mês</h3>
-                                <span class="badge outline">Leitura</span>
-                            </div>
-                            <ul id="overviewSpecialList" class="list"></ul>
-                        </div>
-                    </section>
-                </section>
-
-                <!-- RECEITAS -->
-                <section id="tab-incomes" class="tab-content">
-                    <div class="layout-two">
-                        <div class="card glass-card">
-                            <div class="card-header">
-                                <h3>Nova receita</h3>
-                                <span class="badge soft">Entrada</span>
-                            </div>
-                            <label class="field">
-                                <span>Descrição</span>
-                                <input id="incomeDescription" placeholder="Salário, freelancer, etc." />
-                            </label>
-                            <label class="field">
-                                <span>Valor (R$)</span>
-                                <input id="incomeAmount" type="number" step="0.01" />
-                            </label>
-                            <label class="field">
-                                <span>Data</span>
-                                <input id="incomeDate" type="date" />
-                            </label>
-                            <label class="field">
-                                <span>Grupo de pagamento</span>
-                                <select id="incomePaymentGroup">
-                                    <option value="1">Pagamentos dia 5</option>
-                                    <option value="2">Pagamentos dia 10</option>
-                                    <option value="3">Pagamentos dia 20</option>
-                                </select>
-                            </label>
-                            <label class="field">
-                                <span>Meses recorrentes (incluindo este)</span>
-                                <input id="incomeRecurrentMonths" type="number" min="1" value="1" />
-                            </label>
-                            <label class="field checkbox">
-                                <input id="incomeReceived" type="checkbox" />
-                                <span>Já recebido</span>
-                            </label>
-                            <button id="saveIncomeBtn" class="btn btn-primary full">Salvar receita</button>
-                            <p id="incomeMessage" class="message"></p>
-                        </div>
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Receitas do mês filtrado</h3>
-                            </div>
-                            <ul id="incomeList" class="list"></ul>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- DESPESAS -->
-                <section id="tab-expenses" class="tab-content">
-                    <div class="layout-two">
-                        <div class="card glass-card">
-                            <div class="card-header">
-                                <h3>Nova despesa</h3>
-                                <span class="badge soft danger">Saída</span>
-                            </div>
-                            <label class="field">
-                                <span>Descrição</span>
-                                <input id="expenseDescription" placeholder="Aluguel, internet, etc." />
-                            </label>
-                            <label class="field">
-                                <span>Valor (R$)</span>
-                                <input id="expenseAmount" type="number" step="0.01" />
-                            </label>
-                            <label class="field">
-                                <span>Data de vencimento</span>
-                                <input id="expenseDueDate" type="date" />
-                            </label>
-                            <label class="field">
-                                <span>Tipo</span>
-                                <select id="expenseType">
-                                    <option value="fixa">Fixa</option>
-                                    <option value="recorrente">Recorrente</option>
-                                    <option value="variavel">Variável</option>
-                                </select>
-                            </label>
-                            <label class="field">
-                                <span>Grupo de pagamento</span>
-                                <select id="expensePaymentGroup">
-                                    <option value="1">Pagamentos dia 5</option>
-                                    <option value="2">Pagamentos dia 10</option>
-                                    <option value="3">Pagamentos dia 20</option>
-                                </select>
-                            </label>
-                            <label class="field">
-                                <span>Meses recorrentes (incluindo este)</span>
-                                <input id="expenseRecurrentMonths" type="number" min="1" value="1" />
-                            </label>
-                            <div class="field-inline">
-                                <label class="field checkbox">
-                                    <input id="expenseInstallment" type="checkbox" />
-                                    <span>Parcelada</span>
-                                </label>
-                                <input id="expenseInstallmentCurrent" type="number" min="1"
-                                    placeholder="Parcela atual" />
-                                <input id="expenseInstallmentTotal" type="number" min="1"
-                                    placeholder="Total de parcelas" />
-                            </div>
-                            <label class="field checkbox">
-                                <input id="expensePaid" type="checkbox" />
-                                <span>Já pago</span>
-                            </label>
-                            <p class="muted small">
-                                Dica: use <strong>parcelas</strong> ou <strong>meses recorrentes</strong>. Se marcar
-                                parcelada, os meses
-                                recorrentes serão ignorados.
-                            </p>
-                            <button id="saveExpenseBtn" class="btn btn-primary full">Salvar despesa</button>
-                            <p id="expenseMessage" class="message"></p>
-                        </div>
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Despesas do mês filtrado (fluxo)</h3>
-                                <span class="badge outline">Sem especiais</span>
-                            </div>
-                            <p class="muted small">Contas especiais aparecem em uma aba separada.</p>
-                            <ul id="expenseList" class="list"></ul>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- POUPANÇA -->
-                <section id="tab-savings" class="tab-content">
-                    <div class="layout-two">
-                        <div class="card glass-card">
-                            <div class="card-header">
-                                <h3>Novo valor guardado</h3>
-                                <span class="badge soft">Poupança</span>
-                            </div>
-                            <label class="field">
-                                <span>Valor (R$)</span>
-                                <input id="savingAmount" type="number" step="0.01" />
-                            </label>
-                            <label class="field">
-                                <span>Data</span>
-                                <input id="savingDate" type="date" />
-                            </label>
-                            <label class="field">
-                                <span>Destino / objetivo</span>
-                                <input id="savingGoal" placeholder="Reserva, viagem, etc." />
-                            </label>
-                            <label class="field">
-                                <span>Observações</span>
-                                <textarea id="savingNote" rows="3"></textarea>
-                            </label>
-                            <button id="saveSavingBtn" class="btn btn-primary full">Registrar valor guardado</button>
-                            <p id="savingMessage" class="message"></p>
-                        </div>
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Valores guardados do mês filtrado</h3>
-                            </div>
-                            <ul id="savingList" class="list"></ul>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ESPECIAIS -->
-                <section id="tab-special" class="tab-content">
-                    <div class="layout-two">
-                        <div class="card glass-card">
-                            <div class="card-header">
-                                <h3>Nova conta especial</h3>
-                                <span class="badge soft">Anotação</span>
-                            </div>
-                            <p class="muted small">
-                                Essas contas não entram no fluxo financeiro, servem apenas como registro (podem ser
-                                recorrentes ou parceladas).
-                            </p>
-                            <label class="field">
-                                <span>Descrição</span>
-                                <input id="specialDescription" placeholder="Observação especial" />
-                            </label>
-                            <label class="field">
-                                <span>Valor (R$)</span>
-                                <input id="specialAmount" type="number" step="0.01" />
-                            </label>
-                            <label class="field">
-                                <span>Data</span>
-                                <input id="specialDate" type="date" />
-                            </label>
-                            <label class="field">
-                                <span>Meses recorrentes (incluindo este)</span>
-                                <input id="specialRecurrentMonths" type="number" min="1" value="1" />
-                            </label>
-                            <div class="field-inline">
-                                <label class="field checkbox">
-                                    <input id="specialInstallment" type="checkbox" />
-                                    <span>Parcelada</span>
-                                </label>
-                                <input id="specialInstallmentCurrent" type="number" min="1"
-                                    placeholder="Parcela atual" />
-                                <input id="specialInstallmentTotal" type="number" min="1"
-                                    placeholder="Total de parcelas" />
-                            </div>
-                            <button id="saveSpecialBtn" class="btn btn-primary full">Salvar conta especial</button>
-                            <p id="specialMessage" class="message"></p>
-                        </div>
-                        <div class="card list-card glass-card">
-                            <div class="card-header">
-                                <h3>Contas especiais do mês filtrado</h3>
-                            </div>
-                            <ul id="specialList" class="list"></ul>
-                        </div>
-                    </div>
-                </section>
+                </div>
             </section>
         </main>
     </div>
